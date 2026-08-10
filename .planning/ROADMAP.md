@@ -8,8 +8,8 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
 
 - [x] **Phase 1: Foundation** - Type interfaces, error mapping, protocol encoding primitives
 - [x] **Phase 2: Protocol + Connection** - TCP/TLS transport, Receiver parser, MD5 login, connect/close flow
-- [ ] **Phase 3: Commands + Streaming** - write, writeStream, stream (RStream), keepalive, concurrent channels
-- [ ] **Phase 4: Robustness + Lifecycle** - AppState handling, !fatal recovery, reconnection readiness
+- [x] **Phase 3: Commands + Streaming** - write, writeStream, stream (RStream), keepalive, concurrent channels
+- [x] **Phase 4: Robustness + Lifecycle** - AppState handling, !fatal recovery, reconnection readiness
 - [ ] **Phase 5: Build, Types, Docs + Expo Plugin** - Compilation, shipped .d.ts, README, Expo config plugin
 
 ## Phase Details
@@ -78,7 +78,9 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
   2. Library survives React Native app backgrounding and foregrounding without crashing or leaking socket resources
   3. Connection loss is detectable via socket close/error events, enabling consumer-side reconnection logic
 
-**Plans**: TBD
+**Plans**: 1/1 plans executed
+
+- [x] 04-PLAN.md
 
 ### Phase 5: Build, Types, Docs + Expo Plugin
 
@@ -107,6 +109,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-08-10 |
 | 2. Protocol + Connection | 1/1 | Complete | 2026-08-10 |
-| 3. Commands + Streaming | 1/1 | In Progress|  |
-| 4. Robustness + Lifecycle | 0/1 | Not started | - |
+| 3. Commands + Streaming | 1/1 | Complete | 2026-08-10 |
+| 4. Robustness + Lifecycle | 1/1 | Complete | 2026-08-10 |
 | 5. Build, Types, Docs + Expo Plugin | 0/1 | Not started | - |

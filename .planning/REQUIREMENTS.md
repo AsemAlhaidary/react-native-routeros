@@ -37,7 +37,7 @@
 ### Error Handling
 
 - [x] **ERR-01**: Protocol-level "!trap" errors produce RosException with errno and RouterOS message mapping
-- [ ] **ERR-02**: Connection-level "!fatal" errors are emitted as events and stop the connection cleanly
+- [x] **ERR-02**: Connection-level "!fatal" errors are emitted as events and stop the connection cleanly
 - [x] **ERR-03**: Socket-level errors (connect timeout, TLS handshake failure, connection refused) emit meaningful error messages
 - [x] **ERR-04**: Error messages mapped from the full messages.ts catalog (matching node-routeros error codes)
 
@@ -57,8 +57,8 @@
 
 ### Lifecycle & Robustness
 
-- [ ] **LIFE-01**: Library survives React Native app backgrounding/foregrounding without crashing or leaking sockets
-- [ ] **LIFE-02**: Connection loss is detectable (socket close/error events fire appropriately) for consumer reconnection
+- [x] **LIFE-01**: Library survives React Native app backgrounding/foregrounding without crashing or leaking sockets
+- [x] **LIFE-02**: Connection loss is detectable (socket close/error events fire appropriately) for consumer reconnection
 
 ### Documentation
 
@@ -128,7 +128,7 @@ Deferred to future release.
 | STRM-03 | Phase 3 | Complete |
 | STRM-04 | Phase 3 | Complete |
 | ERR-01 | Phase 2 | Done |
-| ERR-02 | Phase 4 | Pending |
+| ERR-02 | Phase 4 | Complete |
 | ERR-03 | Phase 2 | Done |
 | ERR-04 | Phase 1 | Done |
 | TYPE-01 | Phase 5 | Pending |
@@ -139,8 +139,8 @@ Deferred to future release.
 | BUILD-03 | Phase 5 | Pending |
 | BUILD-04 | Phase 5 | Pending |
 | BUILD-05 | Phase 5 | Pending |
-| LIFE-01 | Phase 4 | Pending |
-| LIFE-02 | Phase 4 | Pending |
+| LIFE-01 | Phase 4 | Complete |
+| LIFE-02 | Phase 4 | Complete |
 | DOCS-01 | Phase 5 | Pending |
 | DOCS-02 | Phase 5 | Pending |
 | DOCS-03 | Phase 5 | Pending |
@@ -150,9 +150,11 @@ Deferred to future release.
 **Coverage:**
 
 - v1 requirements: 36 total
+- Completed: 25
+- Pending: 11 (Phase 5 — Build, Types, Docs + Expo Plugin)
 - Mapped to phases: 36
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-10*
-*Last updated: 2026-08-10 after initial definition*
+*Last updated: 2026-08-10 — Phase 4 complete*
