@@ -12,7 +12,7 @@
 - [x] **CONN-03**: Consumer can configure connection options: host, port, timeout, TLS on/off
 - [x] **CONN-04**: Consumer can close the connection gracefully
 - [x] **CONN-05**: Consumer can reconnect using the same RouterOSAPI instance (setOptions then connect)
-- [ ] **CONN-06**: Consumer can configure a keepalive schedule (keepaliveBy) to prevent RouterOS session timeout
+- [x] **CONN-06**: Consumer can configure a keepalive schedule (keepaliveBy) to prevent RouterOS session timeout
 
 ### Authentication
 
@@ -22,17 +22,17 @@
 
 ### Commands
 
-- [ ] **CMDS-01**: Consumer can send arbitrary RouterOS CLI commands via write([]) and receive the response
-- [ ] **CMDS-02**: Consumer can send streaming commands via writeStream([]) with callbacks per data sentence
-- [ ] **CMDS-03**: Consumer can issue multiple simultaneous commands (independent tags), receiving responses independently
-- [ ] **CMDS-04**: Consumer can open an explicit tagged channel (openChannel) and cancel it before completion
+- [x] **CMDS-01**: Consumer can send arbitrary RouterOS CLI commands via write([]) and receive the response
+- [x] **CMDS-02**: Consumer can send streaming commands via writeStream([]) with callbacks per data sentence
+- [x] **CMDS-03**: Consumer can issue multiple simultaneous commands (independent tags), receiving responses independently
+- [x] **CMDS-04**: Consumer can open an explicit tagged channel (openChannel) and cancel it before completion
 
 ### Streaming
 
-- [ ] **STRM-01**: Consumer can open a continuous data stream via stream([params]) for endpoints like /ip/address/listen or /tool/torch
-- [ ] **STRM-02**: Consumer can pause and resume a running RStream
-- [ ] **STRM-03**: Consumer can stop a running RStream
-- [ ] **STRM-04**: RStream does not emit repeated empty data bursts (empty-data debouncing, inherited from node-routeros)
+- [x] **STRM-01**: Consumer can open a continuous data stream via stream([params]) for endpoints like /ip/address/listen or /tool/torch
+- [x] **STRM-02**: Consumer can pause and resume a running RStream
+- [x] **STRM-03**: Consumer can stop a running RStream
+- [x] **STRM-04**: RStream does not emit repeated empty data bursts (empty-data debouncing, inherited from node-routeros)
 
 ### Error Handling
 
@@ -115,18 +115,18 @@ Deferred to future release.
 | CONN-03 | Phase 2 | Done |
 | CONN-04 | Phase 2 | Done |
 | CONN-05 | Phase 2 | Done |
-| CONN-06 | Phase 3 | Pending |
+| CONN-06 | Phase 3 | Complete |
 | AUTH-01 | Phase 2 | Done |
 | AUTH-02 | Phase 2 | Done |
 | AUTH-03 | Phase 2 | Done |
-| CMDS-01 | Phase 3 | Pending |
-| CMDS-02 | Phase 3 | Pending |
-| CMDS-03 | Phase 3 | Pending |
-| CMDS-04 | Phase 3 | Pending |
-| STRM-01 | Phase 3 | Pending |
-| STRM-02 | Phase 3 | Pending |
-| STRM-03 | Phase 3 | Pending |
-| STRM-04 | Phase 3 | Pending |
+| CMDS-01 | Phase 3 | Complete |
+| CMDS-02 | Phase 3 | Complete |
+| CMDS-03 | Phase 3 | Complete |
+| CMDS-04 | Phase 3 | Complete |
+| STRM-01 | Phase 3 | Complete |
+| STRM-02 | Phase 3 | Complete |
+| STRM-03 | Phase 3 | Complete |
+| STRM-04 | Phase 3 | Complete |
 | ERR-01 | Phase 2 | Done |
 | ERR-02 | Phase 4 | Pending |
 | ERR-03 | Phase 2 | Done |
@@ -148,6 +148,7 @@ Deferred to future release.
 | EXPO-02 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 36 total
 - Mapped to phases: 36
 - Unmapped: 0 ✓
