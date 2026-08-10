@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import createDebug from 'debug';
+import { AppState, AppStateStatus } from 'react-native';
 import { Connector } from './Connector';
 import { Channel } from './Channel';
 import { RStream } from './RStream';
@@ -45,6 +46,9 @@ export class RouterOSAPI extends EventEmitter {
 
   /** Registered RStream instances */
   private registeredStreams: RStream[] = [];
+
+  /** React Native AppState listener subscription (LIFE-01) */
+  private appStateSubscription: { remove: () => void } | null = null;
 
   constructor(options: IRosOptions) {
     super();
@@ -117,6 +121,22 @@ export class RouterOSAPI extends EventEmitter {
           .then(() => {
             this.connecting = false;
             this.connected = true;
+
+            // Register AppState listener for RN lifecycle awareness (LIFE-01)
+            if (!this.appStateSubscription) {
+              this.appStateSubscription = AppState.addEventListener(
+                'change',
+                (_nextAppState: AppStateStatus) => {
+                  // On any state change, verify internal consistency.
+                  // If connected flag is true but connector was destroyed
+                  // (task-1 listener missed due to JS suspension), clean up.
+                  if (this.connected && !this.connector) {
+                    this.connected = false;
+                    this.emit('close');
+                  }
+                }
+              );
+            }
 
             // Swap error/timeout listeners to post-login behavior
             this.connector!.removeListener('error', endListener);
@@ -206,6 +226,12 @@ export class RouterOSAPI extends EventEmitter {
       this.keptaliveby = null;
     }
     this.stopAllStreams();
+
+    // Remove AppState lifecycle listener (LIFE-01)
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+      this.appStateSubscription = null;
+    }
 
     return new Promise((resolve) => {
       this.closing = true;

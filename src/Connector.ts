@@ -83,7 +83,7 @@ export class Connector extends EventEmitter {
           // Wire events — NOTE: no tlsClientError (RN-TCP has none)
           this.socket.on('data', this.onData as any);
           this.socket.on('error', this.onError.bind(this));
-          this.socket.once('close', this.onEnd.bind(this));
+          this.socket.once('close', () => this.onEnd());
           this.socket.once('timeout', this.onTimeout.bind(this));
           (this.socket as any).once('fatal', () => {
             this.onEnd('fatal');
@@ -104,7 +104,7 @@ export class Connector extends EventEmitter {
           // Wire events
           this.socket.on('data', this.onData as any);
           this.socket.on('error', this.onError.bind(this));
-          this.socket.once('close', this.onEnd.bind(this));
+          this.socket.once('close', () => this.onEnd());
           this.socket.once('timeout', this.onTimeout.bind(this));
           (this.socket as any).once('fatal', () => {
             this.onEnd('fatal');
