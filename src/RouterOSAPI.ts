@@ -122,13 +122,45 @@ export class RouterOSAPI extends EventEmitter {
             this.connector!.removeListener('error', endListener);
             this.connector!.removeListener('timeout', endListener);
 
-            const connectedErrorListener = (e: Error) => {
+            // Post-login: persistent listeners for connection lifecycle.
+            // 'close' fires for: !fatal, socket close, destroy — each exactly once
+            // because Connector.destroy() → removeAllListeners().
+            this.connector!.once('close', (reason?: 'fatal') => {
+              this.connected = false;
+              this.connecting = false;
+              // Stop streams + clear timers (mirrors close() cleanup)
+              this.stopAllStreams();
+              if (this.keptaliveby) {
+                clearTimeout(this.keptaliveby);
+                this.keptaliveby = null;
+              }
+              if (this.connectionHoldInterval) {
+                clearTimeout(this.connectionHoldInterval);
+                this.connectionHoldInterval = null;
+              }
+              // Release connector reference
+              this.connector = null;
+
+              if (reason === 'fatal') {
+                // ERR-02: Protocol-level !fatal — emit distinct event
+                this.emit('fatal');
+              }
+              // LIFE-02: Consumer-facing close — enables reconnection
+              this.emit('close');
+            });
+
+            // Post-login error — persistent (on, not once: multiple errors
+            // can fire on a dying socket before destroy)
+            this.connector!.on('error', (e: Error) => {
               this.connected = false;
               this.connecting = false;
               this.emit('error', e);
-            };
-            this.connector!.once('error', connectedErrorListener);
-            this.connector!.once('timeout', connectedErrorListener);
+            });
+            this.connector!.once('timeout', (e: Error) => {
+              this.connected = false;
+              this.connecting = false;
+              this.emit('error', e);
+            });
 
             // Start keepalive if configured (keeps session alive)
             if (this.keepalive) {

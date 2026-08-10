@@ -85,7 +85,9 @@ export class Connector extends EventEmitter {
           this.socket.on('error', this.onError.bind(this));
           this.socket.once('close', this.onEnd.bind(this));
           this.socket.once('timeout', this.onTimeout.bind(this));
-          (this.socket as any).once('fatal', this.onEnd.bind(this));
+          (this.socket as any).once('fatal', () => {
+            this.onEnd('fatal');
+          });
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
           // TLS connect callback fires from createTlsSocket factory
@@ -104,7 +106,9 @@ export class Connector extends EventEmitter {
           this.socket.on('error', this.onError.bind(this));
           this.socket.once('close', this.onEnd.bind(this));
           this.socket.once('timeout', this.onTimeout.bind(this));
-          (this.socket as any).once('fatal', this.onEnd.bind(this));
+          (this.socket as any).once('fatal', () => {
+            this.onEnd('fatal');
+          });
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
           // Plain TCP connect callback fires from createPlainSocket factory
@@ -187,10 +191,11 @@ export class Connector extends EventEmitter {
 
   /**
    * Socket close/fatal handler.
-   * Emits 'close' and destroys the socket + listeners.
+   * Emits 'close' with optional reason and destroys the socket + listeners.
+   * @param reason  'fatal' for !fatal protocol errors, undefined for normal close
    */
-  private onEnd(): void {
-    this.emit('close', this);
+  private onEnd(reason?: 'fatal'): void {
+    this.emit('close', reason, this);
     this.destroy();
   }
 
