@@ -7,18 +7,18 @@
 
 ### Connection
 
-- [ ] **CONN-01**: Consumer can connect to RouterOS over plain TCP (default port 8728)
-- [ ] **CONN-02**: Consumer can connect to RouterOS over TLS (default port 8729), accepting self-signed certificates
-- [ ] **CONN-03**: Consumer can configure connection options: host, port, timeout, TLS on/off
-- [ ] **CONN-04**: Consumer can close the connection gracefully
-- [ ] **CONN-05**: Consumer can reconnect using the same RouterOSAPI instance (setOptions then connect)
+- [x] **CONN-01**: Consumer can connect to RouterOS over plain TCP (default port 8728)
+- [x] **CONN-02**: Consumer can connect to RouterOS over TLS (default port 8729), accepting self-signed certificates
+- [x] **CONN-03**: Consumer can configure connection options: host, port, timeout, TLS on/off
+- [x] **CONN-04**: Consumer can close the connection gracefully
+- [x] **CONN-05**: Consumer can reconnect using the same RouterOSAPI instance (setOptions then connect)
 - [ ] **CONN-06**: Consumer can configure a keepalive schedule (keepaliveBy) to prevent RouterOS session timeout
 
 ### Authentication
 
-- [ ] **AUTH-01**: Consumer can log in with username and password against RouterOS v6 (MD5 challenge-response)
-- [ ] **AUTH-02**: Consumer can log in against RouterOS v7 (supports the same MD5 challenge-response protocol)
-- [ ] **AUTH-03**: Failed login produces a clear error message (RosException with errno), not a generic failure
+- [x] **AUTH-01**: Consumer can log in with username and password against RouterOS v6 (MD5 challenge-response)
+- [x] **AUTH-02**: Consumer can log in against RouterOS v7 (supports the same MD5 challenge-response protocol)
+- [x] **AUTH-03**: Failed login produces a clear error message (RosException with errno), not a generic failure
 
 ### Commands
 
@@ -36,9 +36,9 @@
 
 ### Error Handling
 
-- [ ] **ERR-01**: Protocol-level "!trap" errors produce RosException with errno and RouterOS message mapping
+- [x] **ERR-01**: Protocol-level "!trap" errors produce RosException with errno and RouterOS message mapping
 - [ ] **ERR-02**: Connection-level "!fatal" errors are emitted as events and stop the connection cleanly
-- [ ] **ERR-03**: Socket-level errors (connect timeout, TLS handshake failure, connection refused) emit meaningful error messages
+- [x] **ERR-03**: Socket-level errors (connect timeout, TLS handshake failure, connection refused) emit meaningful error messages
 - [x] **ERR-04**: Error messages mapped from the full messages.ts catalog (matching node-routeros error codes)
 
 ### TypeScript Types
@@ -110,15 +110,15 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONN-01 | Phase 2 | Pending |
-| CONN-02 | Phase 2 | Pending |
-| CONN-03 | Phase 2 | Pending |
-| CONN-04 | Phase 2 | Pending |
-| CONN-05 | Phase 2 | Pending |
+| CONN-01 | Phase 2 | Done |
+| CONN-02 | Phase 2 | Done |
+| CONN-03 | Phase 2 | Done |
+| CONN-04 | Phase 2 | Done |
+| CONN-05 | Phase 2 | Done |
 | CONN-06 | Phase 3 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Done |
+| AUTH-02 | Phase 2 | Done |
+| AUTH-03 | Phase 2 | Done |
 | CMDS-01 | Phase 3 | Pending |
 | CMDS-02 | Phase 3 | Pending |
 | CMDS-03 | Phase 3 | Pending |
@@ -127,13 +127,13 @@ Deferred to future release.
 | STRM-02 | Phase 3 | Pending |
 | STRM-03 | Phase 3 | Pending |
 | STRM-04 | Phase 3 | Pending |
-| ERR-01 | Phase 2 | Pending |
+| ERR-01 | Phase 2 | Done |
 | ERR-02 | Phase 4 | Pending |
-| ERR-03 | Phase 2 | Pending |
-| ERR-04 | Phase 1 | Pending |
+| ERR-03 | Phase 2 | Done |
+| ERR-04 | Phase 1 | Done |
 | TYPE-01 | Phase 5 | Pending |
-| TYPE-02 | Phase 1 | Pending |
-| TYPE-03 | Phase 1 | Pending |
+| TYPE-02 | Phase 1 | Done |
+| TYPE-03 | Phase 1 | Done |
 | BUILD-01 | Phase 5 | Pending |
 | BUILD-02 | Phase 5 | Pending |
 | BUILD-03 | Phase 5 | Pending |

@@ -7,7 +7,7 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
 ## Phases
 
 - [x] **Phase 1: Foundation** - Type interfaces, error mapping, protocol encoding primitives
-- [ ] **Phase 2: Protocol + Connection** - TCP/TLS transport, Receiver parser, MD5 login, connect/close flow
+- [x] **Phase 2: Protocol + Connection** - TCP/TLS transport, Receiver parser, MD5 login, connect/close flow
 - [ ] **Phase 3: Commands + Streaming** - write, writeStream, stream (RStream), keepalive, concurrent channels
 - [ ] **Phase 4: Robustness + Lifecycle** - AppState handling, !fatal recovery, reconnection readiness
 - [ ] **Phase 5: Build, Types, Docs + Expo Plugin** - Compilation, shipped .d.ts, README, Expo config plugin
@@ -38,8 +38,8 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
   5. Consumer receives a clear RosException with the correct errno on failed login (not a generic failure)
   6. Consumer can close the connection gracefully and reconnect using setOptions then connect on the same instance
   7. Protocol-level !trap errors produce RosException with the correct errno and RouterOS message
-  8. Socket-level errors (connect timeout, connection refused, TLS handshake failure) emit meaningful error messages
-**Plans**: TBD
+   8. Socket-level errors (connect timeout, connection refused, TLS handshake failure) emit meaningful error messages
+**Plans**: [02-02-SUMMARY.md](phases/02-protocol-connection/02-02-SUMMARY.md) (complete)
 
 ### Phase 3: Commands + Streaming
 **Goal**: Consumer can send arbitrary RouterOS CLI commands, receive responses as data or streams, manage concurrent tagged channels, and keep the session alive — the full command surface works on top of Phase 2's connection foundation.
@@ -88,8 +88,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | TBD | Not started | - |
-| 2. Protocol + Connection | TBD | Not started | - |
-| 3. Commands + Streaming | TBD | Not started | - |
-| 4. Robustness + Lifecycle | TBD | Not started | - |
-| 5. Build, Types, Docs + Expo Plugin | TBD | Not started | - |
+| 1. Foundation | 1/1 | Complete | 2026-08-10 |
+| 2. Protocol + Connection | 1/1 | Complete | 2026-08-10 |
+| 3. Commands + Streaming | 0/1 | Not started | - |
+| 4. Robustness + Lifecycle | 0/1 | Not started | - |
+| 5. Build, Types, Docs + Expo Plugin | 0/1 | Not started | - |
