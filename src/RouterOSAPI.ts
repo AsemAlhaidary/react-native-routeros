@@ -101,20 +101,21 @@ export class RouterOSAPI extends EventEmitter {
     });
 
     return new Promise((resolve, reject) => {
-      // Pre-login error listener — fires on connect failure, timeout
+      // Pre-login error listener — fires on connect failure, timeout, close
       const endListener = (e?: Error) => {
         this.stopAllStreams();
         this.connected = false;
         this.connecting = false;
         if (e) reject(e);
       };
+      const preLoginClose = () => {
+        this.emit('close');
+        endListener();
+      };
 
       this.connector!.once('error', endListener);
       this.connector!.once('timeout', endListener);
-      this.connector!.once('close', () => {
-        this.emit('close');
-        endListener();
-      });
+      this.connector!.once('close', preLoginClose);
 
       this.connector!.once('connected', () => {
         this.login()
@@ -138,9 +139,10 @@ export class RouterOSAPI extends EventEmitter {
               );
             }
 
-            // Swap error/timeout listeners to post-login behavior
+            // Swap error/timeout/close listeners to post-login behavior
             this.connector!.removeListener('error', endListener);
             this.connector!.removeListener('timeout', endListener);
+            this.connector!.removeListener('close', preLoginClose);
 
             // Post-login: persistent listeners for connection lifecycle.
             // 'close' fires for: !fatal, socket close, destroy — each exactly once
