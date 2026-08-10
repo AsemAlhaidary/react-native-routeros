@@ -1,0 +1,26 @@
+{
+  "name": "react-native-routeros",
+  "version": "0.1.0",
+  "description": "MikroTik RouterOS API client for React Native",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "license": "MIT",
+  "keywords": ["routeros", "mikrotik", "react-native"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "build": "echo 'build deferred to Phase 5'"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.0",
+    "jest": "^30.0.0",
+    "@types/jest": "^30.0.0",
+    "ts-jest": "^29.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/src"]
+  }
+}
