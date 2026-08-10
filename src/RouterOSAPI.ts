@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import createDebug from 'debug';
 import { Connector } from './Connector';
 import { Channel } from './Channel';
+import { RStream } from './RStream';
 import { RosException } from './RosException';
 import { md5Hash } from './md5';
 import { IRosOptions } from './types';
@@ -14,9 +15,8 @@ const debugError = createDebug('routeros-api:api:error');
  * communicating with MikroTik RouterOS devices.
  *
  * Ported from node-routeros RouterOSAPI.js.
- * Phase 2 delivers: connect(), login(), setOptions(), close(),
- * openChannel(), holdConnection(), releaseConnectionHold().
- * Phase 3 will add: write(), writeStream(), stream(), keepaliveBy().
+ * Phase 2: connect(), login(), setOptions(), close()
+ * Phase 3: write(), writeStream(), stream(), keepaliveBy(), openChannel()
  */
 export class RouterOSAPI extends EventEmitter {
   private host!: string;
@@ -43,8 +43,8 @@ export class RouterOSAPI extends EventEmitter {
   /** Timer handle for keepalive (Phase 3) */
   private keptaliveby: ReturnType<typeof setTimeout> | null = null;
 
-  /** Registered RStream instances (Phase 3) */
-  private registeredStreams: any[] = [];
+  /** Registered RStream instances */
+  private registeredStreams: RStream[] = [];
 
   constructor(options: IRosOptions) {
     super();
@@ -317,24 +317,132 @@ export class RouterOSAPI extends EventEmitter {
   }
 
   /**
-   * Write a command and return a Promise with the response.
-   * Minimal implementation for login() — Phase 3 will expand this
-   * to handle multiple params, writeStream, stream, keepalive.
+   * Writes a command over the socket to the routerboard
+   * on a new channel.
    *
-   * @param command   RouterOS command path (e.g., '/login')
-   * @param params    Array of parameter strings
-   * @returns         Promise resolving with parsed response data
+   * @param params       Command path (string) or full params array
+   * @param moreParams   Additional parameters (spread)
+   * @returns            Promise resolving with parsed response data on !done,
+   *                     rejecting with RosException on !trap
    */
-  private write(command: string, params: string[]): Promise<Record<string, any>[]> {
-    const chann = this.openChannel();
+  write(
+    params: string | string[],
+    ...moreParams: (string | string[])[]
+  ): Promise<Record<string, any>[]> {
+    params = this.concatParams(params, moreParams);
+    let chann: Channel | null = this.openChannel();
     this.holdConnection();
 
     chann.once('close', () => {
+      chann = null; // GC hint (matches original)
       this.decreaseChannelsOpen();
       this.releaseConnectionHold();
     });
 
-    return (chann.write([command, ...params]) as Promise<Record<string, any>[]>);
+    return chann.write(params) as Promise<Record<string, any>[]>;
+  }
+
+  /**
+   * Writes a command over the socket to the routerboard
+   * on a new channel and returns an RStream that emits
+   * 'data', 'done', 'trap', and 'close' events.
+   *
+   * @param params       Command path (string) or full params array
+   * @param moreParams   Additional parameters (spread)
+   * @returns            RStream — listen to 'data' for each sentence
+   */
+  writeStream(
+    params: string | string[],
+    ...moreParams: (string | string[])[]
+  ): RStream {
+    params = this.concatParams(params, moreParams);
+    const stream = new RStream(this.openChannel(), params as string[]);
+
+    stream.on('started', () => {
+      this.holdConnection();
+    });
+    stream.on('stopped', () => {
+      this.unregisterStream(stream);
+      this.decreaseChannelsOpen();
+      this.releaseConnectionHold();
+    });
+
+    stream.start();
+    this.registerStream(stream);
+    return stream;
+  }
+
+  /**
+   * Returns a stream object for handling continuous data
+   * flow. Used for endpoints like /ip/address/listen or
+   * /tool/torch that keep sending data endlessly.
+   *
+   * @param params       Command path or params array
+   * @param moreParams   Additional params + optional callback as last arg
+   * @returns            RStream with empty-data debouncing enabled
+   */
+  stream(
+    params: string | string[] = [],
+    ...moreParams: (string | string[] | ((err: Error | null, packet?: any, stream?: RStream) => void))[]
+  ): RStream {
+    let callback = moreParams.pop() as
+      | ((err: Error | null, packet?: any, stream?: RStream) => void)
+      | undefined;
+
+    if (typeof callback !== 'function') {
+      if (callback) {
+        moreParams.push(callback as any);
+      }
+      callback = undefined;
+    }
+
+    params = this.concatParams(
+      params,
+      moreParams as (string | string[])[]
+    );
+
+    const stream = new RStream(
+      this.openChannel(),
+      params as string[],
+      callback
+    );
+
+    stream.on('started', () => {
+      this.holdConnection();
+    });
+    stream.on('stopped', () => {
+      this.unregisterStream(stream);
+      this.decreaseChannelsOpen();
+      this.releaseConnectionHold();
+      stream.removeAllListeners();
+    });
+
+    stream.start();
+    stream.prepareDebounceEmptyData();
+    this.registerStream(stream);
+    return stream;
+  }
+
+  /**
+   * Concatenate parameters into a flat string array.
+   * Handles both string and array arguments (variadic).
+   */
+  concatParams(
+    firstParameter: string | string[],
+    parameters: (string | string[])[]
+  ): string[] {
+    if (typeof firstParameter === 'string') {
+      firstParameter = [firstParameter];
+    }
+    for (let parameter of parameters) {
+      if (typeof parameter === 'string') {
+        parameter = [parameter];
+      }
+      if (parameter.length > 0) {
+        firstParameter = firstParameter.concat(parameter);
+      }
+    }
+    return firstParameter;
   }
 
   // ──── Channel bookkeeping (verbatim from original) ────
@@ -347,11 +455,11 @@ export class RouterOSAPI extends EventEmitter {
     this.channelsOpen--;
   }
 
-  private registerStream(stream: any): void {
+  private registerStream(stream: RStream): void {
     this.registeredStreams.push(stream);
   }
 
-  private unregisterStream(stream: any): void {
+  private unregisterStream(stream: RStream): void {
     this.registeredStreams = this.registeredStreams.filter(
       (s) => s !== stream
     );
@@ -405,21 +513,69 @@ export class RouterOSAPI extends EventEmitter {
 
   // ──── Keepalive (stub for Phase 3; enough for connect()) ────
 
-  private keepaliveBy(params: string = '#'): void {
+  /**
+   * Keep the connection alive by running a set of
+   * commands provided instead of the random command.
+   *
+   * Sends the command every (timeout / 2) seconds.
+   * Continues across channel open/close cycles.
+   *
+   * @param params       Command string or array to send as keepalive
+   * @param moreParams   Additional params + optional callback as last arg
+   */
+  keepaliveBy(
+    params: string | string[] = '#',
+    ...moreParams: (
+      | string
+      | string[]
+      | ((err: Error | null, data?: any) => void)
+    )[]
+  ): void {
     this.holdingConnectionWithKeepalive = true;
+
     if (this.keptaliveby) {
       clearTimeout(this.keptaliveby);
     }
+
+    let callback = moreParams.pop() as
+      | ((err: Error | null, data?: any) => void)
+      | undefined;
+
+    if (typeof callback !== 'function') {
+      if (callback) {
+        moreParams.push(callback as any);
+      }
+      callback = undefined;
+    }
+
+    params = this.concatParams(
+      params,
+      moreParams as (string | string[])[]
+    );
+
     const exec = () => {
       if (!this.closing) {
-        if (this.keptaliveby) clearTimeout(this.keptaliveby);
+        if (this.keptaliveby) {
+          clearTimeout(this.keptaliveby);
+        }
         this.keptaliveby = setTimeout(() => {
-          this.write(params, [])
-            .then(() => exec())
-            .catch(() => exec());
+          (this.write(params as string[]) as Promise<Record<string, any>[]>)
+            .then((data) => {
+              if (typeof callback === 'function') {
+                callback(null, data);
+              }
+              exec();
+            })
+            .catch((err) => {
+              if (typeof callback === 'function') {
+                callback(err, null);
+              }
+              exec();
+            });
         }, (this.timeout * 1000) / 2);
       }
     };
+
     exec();
   }
 
