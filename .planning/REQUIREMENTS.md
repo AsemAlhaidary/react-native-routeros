@@ -39,13 +39,13 @@
 - [ ] **ERR-01**: Protocol-level "!trap" errors produce RosException with errno and RouterOS message mapping
 - [ ] **ERR-02**: Connection-level "!fatal" errors are emitted as events and stop the connection cleanly
 - [ ] **ERR-03**: Socket-level errors (connect timeout, TLS handshake failure, connection refused) emit meaningful error messages
-- [ ] **ERR-04**: Error messages mapped from the full messages.ts catalog (matching node-routeros error codes)
+- [x] **ERR-04**: Error messages mapped from the full messages.ts catalog (matching node-routeros error codes)
 
 ### TypeScript Types
 
 - [ ] **TYPE-01**: Library ships .d.ts type definitions for all public exports
-- [ ] **TYPE-02**: IRosOptions interface is exported (host, port, timeout, TLS, credentials)
-- [ ] **TYPE-03**: IRosGenericResponse interface is exported
+- [x] **TYPE-02**: IRosOptions interface is exported (host, port, timeout, TLS, credentials)
+- [x] **TYPE-03**: IRosGenericResponse interface is exported
 
 ### Build & Package
 

@@ -6,7 +6,7 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** - Type interfaces, error mapping, protocol encoding primitives
+- [x] **Phase 1: Foundation** - Type interfaces, error mapping, protocol encoding primitives
 - [ ] **Phase 2: Protocol + Connection** - TCP/TLS transport, Receiver parser, MD5 login, connect/close flow
 - [ ] **Phase 3: Commands + Streaming** - write, writeStream, stream (RStream), keepalive, concurrent channels
 - [ ] **Phase 4: Robustness + Lifecycle** - AppState handling, !fatal recovery, reconnection readiness
@@ -23,8 +23,8 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
   2. The full RouterOS error message catalog (messages.ts) maps every known error code to a human-readable string
   3. RosException class accepts an errno and resolves to the correct message from the catalog
   4. The win1252 codec correctly encodes and decodes all 256 Windows-1252 byte values, matching iconv-lite output exactly
-  5. Utility functions (arrayToHex, input sanitization) are testable in isolation with correct outputs
-**Plans**: TBD
+   5. Utility functions (arrayToHex, input sanitization) are testable in isolation with correct outputs
+**Plans**: [01-01-SUMMARY.md](phases/01-foundation/01-01-SUMMARY.md) (complete)
 
 ### Phase 2: Protocol + Connection
 **Goal**: Consumer can establish a TCP or TLS connection to a RouterOS device, authenticate via MD5 challenge-response, and receive protocol-level error messages — the full connect → login → close lifecycle works end-to-end.
