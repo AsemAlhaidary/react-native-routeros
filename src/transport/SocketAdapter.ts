@@ -1,4 +1,4 @@
-import TcpSockets, { createConnection, connectTLS } from 'react-native-tcp-socket';
+import TcpSockets from 'react-native-tcp-socket';
 import { TlsRnOptions } from '../types';
 import createDebug from 'debug';
 
@@ -25,7 +25,7 @@ export interface CreateSocketOptions {
  */
 export function createPlainSocket(options: CreateSocketOptions): RosSocket {
   debug('Creating plain TCP socket to %s:%d', options.host, options.port);
-  const socket = createConnection(
+  const socket = TcpSockets.createConnection(
     {
       port: options.port,
       host: options.host,
@@ -82,7 +82,7 @@ export function createTlsSocket(options: CreateSocketOptions): RosSocket {
     }
   }
 
-  const socket = connectTLS(tlsOpts, () => {
+  const socket = TcpSockets.connectTLS(tlsOpts as any, () => {
     debug('TLS connected to %s:%d', options.host, options.port);
   });
 

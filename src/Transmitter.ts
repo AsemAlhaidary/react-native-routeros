@@ -34,7 +34,7 @@ export class Transmitter {
    */
   write(data: string | null): void {
     const encodedData = this.encodeString(data);
-    if (!this.socket.writable || this.pool.length > 0) {
+    if (!(this.socket as any).writable || this.pool.length > 0) {
       debug('Socket not writable, saving %o in the pool', data);
       this.pool.push(encodedData);
     } else {

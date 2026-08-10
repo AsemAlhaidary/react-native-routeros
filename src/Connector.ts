@@ -81,11 +81,11 @@ export class Connector extends EventEmitter {
           this.transmitter = new Transmitter(this.socket);
           this.receiver = new Receiver(this.socket);
           // Wire events — NOTE: no tlsClientError (RN-TCP has none)
-          this.socket.on('data', this.onData.bind(this));
+          this.socket.on('data', this.onData as any);
           this.socket.on('error', this.onError.bind(this));
           this.socket.once('close', this.onEnd.bind(this));
           this.socket.once('timeout', this.onTimeout.bind(this));
-          this.socket.once('fatal', this.onEnd.bind(this));
+          (this.socket as any).once('fatal', this.onEnd.bind(this));
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
           // TLS connect callback fires from createTlsSocket factory
@@ -100,11 +100,11 @@ export class Connector extends EventEmitter {
           this.transmitter = new Transmitter(this.socket);
           this.receiver = new Receiver(this.socket);
           // Wire events
-          this.socket.on('data', this.onData.bind(this));
+          this.socket.on('data', this.onData as any);
           this.socket.on('error', this.onError.bind(this));
           this.socket.once('close', this.onEnd.bind(this));
           this.socket.once('timeout', this.onTimeout.bind(this));
-          this.socket.once('fatal', this.onEnd.bind(this));
+          (this.socket as any).once('fatal', this.onEnd.bind(this));
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
           // Plain TCP connect callback fires from createPlainSocket factory

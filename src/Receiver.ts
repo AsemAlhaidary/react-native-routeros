@@ -197,7 +197,7 @@ export class Receiver {
           // !fatal without more data → connection-level fatal error
           // Emit 'fatal' on socket → Connector.onEnd() → close + destroy
           if (!line.hadMore && this.currentReply === '!fatal') {
-            this.socket.emit('fatal');
+            (this.socket as any).emit('fatal');
             return;
           }
           debug('Processing line %s', line.sentence);

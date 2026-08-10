@@ -334,7 +334,7 @@ export class RouterOSAPI extends EventEmitter {
       this.releaseConnectionHold();
     });
 
-    return chann.write([command, ...params]) as Promise<Record<string, any>[]>;
+    return (chann.write([command, ...params]) as Promise<Record<string, any>[]>);
   }
 
   // ──── Channel bookkeeping (verbatim from original) ────
@@ -382,8 +382,7 @@ export class RouterOSAPI extends EventEmitter {
           chann.on('close', () => {
             chann = null;
           });
-          chann
-            .write(['#'])
+          (chann.write(['#']) as Promise<Record<string, any>[]>)
             .then(() => {
               holdConnInterval();
             })
