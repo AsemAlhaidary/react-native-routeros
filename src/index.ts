@@ -16,3 +16,6 @@ export { Connector } from './Connector';
 export type { ConnectorOptions } from './Connector';
 export { Channel } from './Channel';
 export { RouterOSAPI } from './RouterOSAPI';
+
+// Phase 3: Commands + Streaming
+export { RStream } from './RStream';
