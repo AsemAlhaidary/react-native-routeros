@@ -373,19 +373,19 @@ Note: the API doc's OID example confirms v7 uses `cpu-load` (v6 used `cpu` for t
 
 **If this table is empty:** n/a — assumptions listed above need user confirmation during discuss/verify.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What is the v7 service on port 8175?**
+1. **What is the v7 service on port 8175?** — **RESOLVED:** resolved at runtime via the env-driven `ROUTEROS_V7_PORT` (default 8175) plus the 07-01 `user_setup.dashboard_config` confirmation step; if 8175 proves to be a non-API service, the connect test fails loudly and the env var is trivially changeable.
    - What we know: 8175 is reachable from this dev machine; 8728/8729 are not `[VERIFIED: TCP probe]`. RouterOS API standard ports are 8728/8729 `[CITED]`.
    - What's unclear: whether 8175 is a custom `/ip service` API port, a NAT forward, or a typo.
    - Recommendation: ask the user to confirm; keep port env-driven (`ROUTEROS_V7_PORT`, default 8175) so it's trivially changeable.
 
-2. **The RN connect-flow divergence (synchronous `onConnect()` + missing `writable`) — fix now or record-only?**
+2. **The RN connect-flow divergence (synchronous `onConnect()` + missing `writable`) — fix now or record-only?** — **RESOLVED:** record-only. Phase 7 stays test-only per the phase goal; the divergence is recorded in `FINDINGS.md` + a known-gap assertion in `connect-login.int.ts` (07-01), never patched in `src/`.
    - What we know: the RN port deviates from the original (synchronous `onConnect`, no socket-'connect' wiring); RN-TCP `Socket` lacks `writable` and throws while pending `[VERIFIED: src/Connector.ts, node_modules/react-native-tcp-socket/src/Socket.js]`. The net-bridge masks it.
    - What's unclear: whether the user wants Phase 7 to surface this as a finding (TEST-only) or to also patch `Connector.ts`/`SocketAdapter.ts`.
    - Recommendation: keep Phase 7 test-only per the goal; file the divergence as a finding for a follow-up fix phase (or `/gsd-debug`). Do not silently refactor inside a test phase.
 
-3. **Exact RouterOS version of each device**
+3. **Exact RouterOS version of each device** — **RESOLVED:** logged as the first assertion — `connect-login.int.ts` logs `/system/resource/print` `.version` for both devices (07-01 task 1, test 3), and `detectVersion()` derives the major (6|7) for recipe selection.
    - What we know: unknown; the v7 port anomaly hints at custom config.
    - What's unclear: v7 minor version (≥7.18 changes `!empty` behavior) and v6 minor version (affects User Manager field shape).
    - Recommendation: the `connect-login.int.ts` should log `/system/resource/print` `.version` for both devices as its first assertion.

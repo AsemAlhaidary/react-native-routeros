@@ -4,15 +4,15 @@ milestone: v1.6.8
 milestone_name: milestone
 current_phase: 5
 current_phase_name: Build, Types, Docs + Expo Plugin
-status: planning
+status: executing
 stopped_at: Completed 06-02-PLAN.md (scenario recipes + installation guide + README docs links)
-last_updated: "2026-08-17T15:38:30.729Z"
+last_updated: "2026-08-17T19:48:25.659Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 06 complete, transitioned to Phase 5
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 6
-  total_plans: 9
+  total_plans: 12
   completed_plans: 9
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 
 Phase: 5 — Build, Types, Docs + Expo Plugin
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-08-17 — Phase 06 complete, transitioned to Phase 5
 
 Progress: [██████████] 100%
@@ -121,6 +121,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 6 added: Explore and define the features of this package and how to use it in various scenarios, providing real-world examples of how to handle different situations. Include examples demonstrating how to use and benefit from all the package's features. Also, determine how to install it and begin the installation process.
+- Phase 7 added: Test package on real RouterOS v6 and v7 routers
 
 ## Deferred Items
 
