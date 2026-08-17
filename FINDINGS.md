@@ -26,3 +26,45 @@ it behaves inside a real RN app.
 `test/integration/connect-login.int.ts` (const `ONCONNECT_DIVERGENCE`). Follow-up
 is deferred to a fix phase or `/gsd-debug` — do **not** silently patch
 `Connector.ts`/`SocketAdapter.ts` inside this test phase.
+
+## Finding 2: v7 `!empty` reply (RouterOS 7.18+) crashes the library — uncaught, not a rejection
+
+**Status:** RECORD-ONLY (no `src/` patch in this phase)
+
+**Observation:** `src/Channel.ts` `processPacket()` has cases only for
+`!re`/`!done`; any other reply word (including `!empty`, introduced in
+RouterOS 7.18 for empty-result commands) falls to `default` → `emit('unknown')`
+→ `onUnknown()` throws `RosException('UNKNOWNREPLY')`. This throw happens
+*synchronously inside the socket `'data'` handler* (`Receiver.sendTagData` →
+`Channel.processPacket`), so it escapes as an **uncaught exception** rather than
+a Promise rejection — the `write()` Promise never settles (the channel's `close()`
+is never reached).
+
+**Why the probe must not `await`:** a plain `try { await api.write(...) } catch`
+cannot observe the `!empty` error (the throw is in the data handler, not the
+promise), and the `write()` promise would hang. `test/integration/error-handling.int.ts`
+instead issues the empty-result command fire-and-forget, observes the escape via a
+scoped `process.on('uncaughtException')` recorder, and bounds the wait with a
+`Promise.race` timeout — recording the finding without ever letting it fail the
+suite.
+
+**Disposition:** Recorded here + logged as `known-gap (!empty)` by the probe.
+The fix (a `!empty` case in `Channel.processPacket` returning empty data) is
+deferred to a follow-up fix phase; do **not** patch `src/` inside this test phase.
+
+## Finding 3: `Connector.onError` wraps numeric `err.errno` (not `err.code`)
+
+**Status:** RECORD-ONLY (no `src/` patch in this phase)
+
+**Observation:** `src/Connector.ts` `onError()` wraps the underlying socket error
+as `new RosException(err.errno || 'ECONNREFUSED', …)`. On Node (Windows/Linux),
+`err.errno` is a **numeric** OS errno (e.g. `-4078` on Windows) while the
+human-readable string lives in `err.code` (`'ECONNREFUSED'`). So a *refused*
+connection surfaces a `RosException` whose `errno` is a number, not the literal
+`'ECONNREFUSED'` string the phase's truth statement anticipated. Only the
+*timeout* path (`Connector.onTimeout`) surfaces the literal `'SOCKTMOUT'`.
+
+**Disposition:** Recorded here. `test/integration/error-handling.int.ts` accepts
+both the documented string codes (`SOCKTMOUT`, `ECONNREFUSED`, …) and a numeric
+OS errno so the assertion holds across platforms. The fix (`err.code` vs
+`err.errno`) is deferred to a follow-up fix phase.
