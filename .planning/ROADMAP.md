@@ -121,3 +121,15 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Commands + Streaming | 1/1 | Complete | 2026-08-10 |
 | 4. Robustness + Lifecycle | 1/1 | Complete | 2026-08-10 |
 | 5. Build, Types, Docs + Expo Plugin | 3/3 | In Progress|  |
+
+### Phase 6: Explore and define the features of this package and how to use it in various scenarios, providing real-world examples of how to handle different situations. Include examples demonstrating how to use and benefit from all the package's features. Also, determine how to install it and begin the installation process.
+
+**Goal**: A developer can install react-native-routeros on Bare React Native or an Expo custom dev client, understand every public feature from a complete API reference, and copy working real-world examples covering connect/login, write, writeStream, stream, keepalive, close, reconnection, and TLS — all grounded in the shipped API.
+**Requirements**: none (documentation phase — no mapped requirement IDs)
+**Depends on:** Phase 5
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 06-01-PLAN.md — Canonical connect → login → write → close example (tracer) + full API/feature reference (docs/API.md)
+- [ ] 06-02-PLAN.md — Real-world scenario recipes (docs/EXAMPLES.md) + installation guide (docs/INSTALLATION.md) + README Documentation links
