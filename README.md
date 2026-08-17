@@ -148,13 +148,13 @@ stream.on('close', () => {
 
 ### stream
 
-`stream()` is for continuous endpoints that keep sending data, such as `/ip/address/listen` or `/tool/torch`. It returns an `RStream` (with empty-data debouncing enabled) and also accepts an optional callback as the last argument.
+`stream()` is for continuous endpoints that keep sending data, such as `/tool/torch`. It returns an `RStream` (with empty-data debouncing enabled) and also accepts an optional callback as the last argument.
 
 ```typescript
-const listen = api.stream('/ip/address/listen');
+const torch = api.stream('/tool/torch', ['=interface=ether1']);
 
-listen.on('data', (packet) => {
-  console.log('Address update:', packet);
+torch.on('data', (packet) => {
+  console.log('Torch packet:', packet);
 });
 ```
 

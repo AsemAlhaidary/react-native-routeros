@@ -434,8 +434,8 @@ export class RouterOSAPI extends EventEmitter {
 
   /**
    * Returns a stream object for handling continuous data
-   * flow. Used for endpoints like /ip/address/listen or
-   * /tool/torch that keep sending data endlessly.
+   * flow. Used for endpoints like /tool/torch that
+   * keep sending data endlessly.
    *
    * @param params       Command path or params array
    * @param moreParams   Additional params + optional callback as last arg

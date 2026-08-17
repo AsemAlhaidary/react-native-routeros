@@ -10,8 +10,8 @@ const debugError = createDebug('routeros-api:rstream:error');
 /**
  * Stream class is responsible for handling
  * continuous data from some parts of the
- * routeros, like /ip/address/listen or
- * /tool/torch which keeps sending data endlessly.
+ * routeros, like /tool/torch which keeps
+ * sending data endlessly.
  * It is also possible to pause/resume/stop generated
  * streams.
  *

@@ -90,18 +90,18 @@ console.log('Firewall rule added');
 
 ## 4. Continuous monitoring stream
 
-`stream()` returns an `RStream` for endpoints that keep sending data, such as `/ip/address/listen`. Attach an `on('data')` listener to react to each packet.
+`stream()` returns an `RStream` for endpoints that keep sending data, such as `/tool/torch`. Attach an `on('data')` listener to react to each packet.
 
 ```typescript
 import { RouterOSAPI, RStream } from 'react-native-routeros';
 
 await api.connect();
 
-const listen: RStream = api.stream('/ip/address/listen');
+const torch: RStream = api.stream('/tool/torch', ['=interface=ether1']);
 
-listen.on('data', (packet) => {
-  // Fires for every address change on the router
-  console.log('Address update:', packet);
+torch.on('data', (packet) => {
+  // Fires for every torch packet
+  console.log('Torch packet:', packet);
 });
 listen.on('error', (data) => {
   console.error('Stream error:', data.message);
@@ -136,8 +136,8 @@ api.stream('/tool/torch', ['=interface=ether1'], (err, packet, stream) => {
 `RStream` exposes `pause()`, `resume()`, and `stop()` — each returns a `Promise<void>`.
 
 ```typescript
-const listen = api.stream('/ip/address/listen');
-listen.on('data', (packet) => console.log('Address update:', packet));
+const torch = api.stream('/tool/torch', ['=interface=ether1']);
+torch.on('data', (packet) => console.log('Torch packet:', packet));
 
 // Pause the stream (sends /cancel; the channel stays open for resume)
 await listen.pause();

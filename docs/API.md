@@ -120,7 +120,7 @@ new RouterOSAPI(options: IRosOptions)
 | `close` | `(): Promise<this>` | Gracefully close the connection. The instance can be reconnected via `setOptions()` then `connect()` |
 | `write` | `(params: string \| string[], ...moreParams: (string \| string[])[]): Promise<Record<string, any>[]>` | Send a one-shot command on a new tagged channel; resolves with the array of parsed response objects on `!done`, rejects on `!trap` |
 | `writeStream` | `(params: string \| string[], ...moreParams: (string \| string[])[]): RStream` | Send a command and return an `RStream` emitting `data`/`done`/`trap`/`close` |
-| `stream` | `(params: string \| string[] = [], ...moreParams: (string \| string[] \| callback)[]): RStream` | Return an `RStream` for continuous endpoints (e.g. `/ip/address/listen`, `/tool/torch`); accepts an optional `(err, packet, stream)` callback as the last argument; empty-data debouncing is enabled |
+| `stream` | `(params: string \| string[] = [], ...moreParams: (string \| string[] \| callback)[]): RStream` | Return an `RStream` for continuous endpoints (e.g. `/tool/torch`); accepts an optional `(err, packet, stream)` callback as the last argument; empty-data debouncing is enabled |
 | `keepaliveBy` | `(params: string \| string[] = '#', ...moreParams: (string \| string[] \| callback)[]): void` | Run a command at a fixed interval (every `timeout / 2` seconds) to keep the session alive |
 | `openChannel` | `(): Channel` | Open a new tagged `Channel` (used internally by `write`) |
 
@@ -148,7 +148,7 @@ Credentials traverse the socket; the challenge internals are handled entirely in
 
 ## 3. `RStream`
 
-`class RStream extends EventEmitter` — handles continuous data from endpoints that keep sending data endlessly (e.g. `/ip/address/listen`, `/tool/torch`). Supports pause / resume / stop.
+`class RStream extends EventEmitter` — handles continuous data from endpoints that keep sending data endlessly (e.g. `/tool/torch`). Supports pause / resume / stop.
 
 ### Methods
 
