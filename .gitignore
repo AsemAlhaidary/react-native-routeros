@@ -3,3 +3,6 @@ node-routeros/
 lib/
 
 plugin/build/
+
+# Real lab router credentials (integration tests) — never commit
+.env.test

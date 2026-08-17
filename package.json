@@ -49,6 +49,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:integration": "jest -c jest.integration.config.js",
     "build": "bob build && tsc -p plugin/tsconfig.json",
     "build:plugin": "tsc -p plugin/tsconfig.json"
   },
