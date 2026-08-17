@@ -12,7 +12,7 @@ A React Native app can `connect` to a MikroTik router, log in (RouterOS v6/v7), 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Document the library (README with usage examples, API reference) — Validated in Phase 6 (docs/API.md, docs/EXAMPLES.md, docs/INSTALLATION.md, examples/basic-usage.ts, README documentation links)
 
 ### Active
 
@@ -23,7 +23,6 @@ A React Native app can `connect` to a MikroTik router, log in (RouterOS v6/v7), 
 - [ ] Maintain full parity with node-routeros feature surface: connect, login (v6+v7), write/writeStream, stream (RStream / listen), keepalive, close, error mapping
 - [ ] Make the library installable in any Bare RN project or Expo project (config plugin / prebuild friendly)
 - [ ] Support TypeScript consumers with shipped type definitions
-- [ ] Document the library (README with usage examples, API reference)
 
 ### Out of Scope
 
@@ -82,4 +81,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-10 after GSD new-project questioning*
+*Last updated: 2026-08-17 after Phase 6 (documentation) completion*
