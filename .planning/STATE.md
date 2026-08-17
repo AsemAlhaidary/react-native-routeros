@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.6.8
 milestone_name: milestone
-current_phase: 05
-current_phase_name: build-types-docs-expo-plugin
+current_phase: 06
+current_phase_name: explore-and-define-the-features-of-this-package-and-how-to-u
 status: executing
-stopped_at: Completed 05-03-PLAN.md (Expo config plugin)
-last_updated: "2026-08-17T15:05:36.445Z"
+stopped_at: Completed 06-01-PLAN.md (canonical example + API reference)
+last_updated: "2026-08-17T15:20:20.289Z"
 last_activity: 2026-08-17
-last_activity_desc: Phase 05 execution started
+last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-10)
 
 **Core value:** A React Native app can connect to a MikroTik router, log in (RouterOS v6/v7), and issue write/writeStream/stream commands with the exact same developer experience as node-routeros — no Node.js runtime required.
-**Current focus:** Phase 05 — build-types-docs-expo-plugin
+**Current focus:** Phase 06 — explore-and-define-the-features-of-this-package-and-how-to-u
 
 ## Current Position
 
-Phase: 05 (build-types-docs-expo-plugin) — EXECUTING
-Plan: 3 of 3
+Phase: 06 (explore-and-define-the-features-of-this-package-and-how-to-u) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-08-17 — Phase 05 execution started
+Last activity: 2026-08-17 — Phase 06 execution started
 
-Progress: [██████████] 100%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 | Phase 05-build-types-docs-expo-plugin P01 | 10 | 3 tasks | 3 files |
 | Phase 05 P02 | 2 | 2 tasks | 1 files |
 | Phase 05-build-types-docs-expo-plugin P03 | 14 min | 2 tasks | 8 files |
+| Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P01 | 7 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Used AndroidConfig.Permissions.ensurePermissions (plural, manifest-first arg order) - plan's ensurePermission had arguments reversed vs @expo/config-plugins v57 signature
 - [Phase ?]: iOS plugin uses withDangerousMod + WarningAggregator (non-fatal) vs Android throwing presence check - iOS autolinks via CocoaPods
 - [Phase ?]: plugin/build/ gitignored (consistent with lib/) - build output shipped via package.json files, not committed to git
+- [Phase ?]: 06-01: example uses placeholder credentials ('admin'/'password') with explicit env-var/secure-key-store comment - intentional per threat-model T-06-01, not a stub
+- [Phase ?]: 06-01: docs/API.md organized by subsystem (types > RouterOSAPI > RStream > lower-level classes > errors > codec/utils > transport) mirroring src/index.ts export grouping
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T14:14:53.785Z
-Stopped at: Completed 05-03-PLAN.md (Expo config plugin)
+Last session: 2026-08-17T15:20:01.853Z
+Stopped at: Completed 06-01-PLAN.md (canonical example + API reference)
 Resume file: None
