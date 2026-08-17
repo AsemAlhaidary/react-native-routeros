@@ -106,7 +106,7 @@ async function main() {
 
 ### write
 
-`write()` sends a one-shot command and resolves to an array of parsed response objects on `!done`. It rejects with a `RosException` on `!trap`.
+`write()` sends a one-shot command and resolves to an array of parsed response objects on `!done`. On a RouterOS `!trap`, it rejects with a plain `Error` (its `.message` is the trap text) — not a `RosException`.
 
 ```typescript
 try {

@@ -142,17 +142,26 @@ async function verify() {
   });
 
   try {
+    // connect() rejects with a RosException (e.g. CANTLOGIN, SOCKTMOUT, ECONNREFUSED)
     await api.connect();
-    const resources = await api.write('/system/resource/print');
-    console.log('Connected. Resources:', resources);
-    await api.close();
   } catch (err) {
     if (err instanceof RosException) {
       console.error('RouterOS error:', err.errno, err.message);
     } else {
       console.error('Unexpected error:', err);
     }
+    return;
   }
+
+  // A command !trap rejects with a plain Error (its .message is the trap text).
+  try {
+    const resources = await api.write('/system/resource/print');
+    console.log('Connected. Resources:', resources);
+  } catch (err) {
+    console.error('Command failed:', (err as Error).message);
+  }
+
+  await api.close();
 }
 
 verify();

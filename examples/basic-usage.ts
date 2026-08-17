@@ -25,17 +25,8 @@ async function basicUsage(): Promise<void> {
 
   try {
     // connect() opens the TCP/TLS connection and logs in automatically.
+    // On failure it rejects with a RosException (e.g. CANTLOGIN, SOCKTMOUT, ECONNREFUSED).
     await api.connect();
-
-    // Issue one read command and iterate the parsed response objects
-    // (an array of Record<string, any> keyed by RouterOS field name).
-    const resources = await api.write('/system/resource/print');
-    for (const resource of resources) {
-      console.log('Resource:', resource);
-    }
-
-    // Gracefully close the connection.
-    await api.close();
   } catch (err) {
     if (err instanceof RosException) {
       // RosException exposes readonly errno and message (plus name === 'RosException').
@@ -43,7 +34,22 @@ async function basicUsage(): Promise<void> {
     } else {
       console.error('Unexpected error:', err);
     }
+    return;
   }
+
+  try {
+    // A command !trap rejects with a plain Error (its .message is the trap text),
+    // not a RosException.
+    const resources = await api.write('/system/resource/print');
+    for (const resource of resources) {
+      console.log('Resource:', resource);
+    }
+  } catch (err) {
+    console.error('Command failed:', (err as Error).message);
+  }
+
+  // Gracefully close the connection.
+  await api.close();
 }
 
 export default basicUsage;

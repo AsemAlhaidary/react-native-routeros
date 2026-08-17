@@ -272,15 +272,16 @@ await pinnedApi.connect();
 
 ---
 
-## 12. Error handling — look up errno against the catalog
+## 12. Error handling — distinguish RosException from command traps
 
-`RosException` exposes a readonly `errno` key. You can map it to a human-readable message with the `messages` catalog.
+`RosException` (with a readonly `errno` key) is thrown by `connect()`/login/socket failures. A RouterOS `!trap` from a command, by contrast, rejects with a **plain `Error`** whose `.message` is the trap text — it has no `errno` and is not a `RosException`.
 
 ```typescript
 import { messages, RosException } from 'react-native-routeros';
 
+// connect() failures reject with RosException (e.g. CANTLOGIN, SOCKTMOUT, ECONNREFUSED)
 try {
-  await api.write('/ip/address/print');
+  await api.connect();
 } catch (err) {
   if (err instanceof RosException) {
     const friendly = messages[err.errno] ?? err.message;
@@ -288,6 +289,13 @@ try {
   } else {
     console.error('Unexpected error:', err);
   }
+}
+
+// A command !trap is a plain Error with a .message, e.g.:
+try {
+  await api.write('/ip/address/print');
+} catch (err) {
+  console.error('Command failed:', (err as Error).message);
 }
 ```
 
