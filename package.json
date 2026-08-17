@@ -72,5 +72,10 @@
     "events": "^3.3.0",
     "js-md5": "^0.9.2",
     "react-native-tcp-socket": "^6.4.2"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-tcp-socket": "^6.4.2"
   }
 }
