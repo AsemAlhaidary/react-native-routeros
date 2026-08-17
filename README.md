@@ -252,3 +252,12 @@ const apiTls = new RouterOSAPI({
   tls: { ca: /* PEM certificate content */ },
 });
 ```
+
+## Documentation
+
+Deeper guides and examples:
+
+- [Installation](docs/INSTALLATION.md) — end-to-end install for Bare React Native and Expo custom dev client (prerequisites, peer deps, `pod install`, config plugin, Expo Go limitation, verification)
+- [API reference](docs/API.md) — complete reference for every public export (types, `RouterOSAPI`, `RStream`, lower-level classes, errors, codec/utils, transport)
+- [Examples](docs/EXAMPLES.md) — real-world scenario recipes (connect + errors, read/write commands, monitoring + torch streams, pause/resume/stop, concurrent commands, keepalive, reconnection, TLS)
+- [basic-usage.ts](examples/basic-usage.ts) — canonical end-to-end `connect → login → write → close` example
