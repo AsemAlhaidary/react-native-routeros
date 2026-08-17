@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 07
 current_phase_name: test-package-on-real-routeros-v6-and-v7-routers
 status: executing
-stopped_at: Completed 07-01-PLAN.md (integration harness + tracer + version probe)
-last_updated: "2026-08-17T20:24:47.046Z"
+stopped_at: Completed 07-02-PLAN.md (write/writeStream/stream/keepalive command-surface specs)
+last_updated: "2026-08-17T20:50:18.514Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 07 execution started
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 07 (test-package-on-real-routeros-v6-and-v7-routers) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-17 — Phase 07 execution started
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [████████░░] 83%
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P01 | 7 min | 2 tasks | 2 files |
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P02 | 5 | 3 tasks | 3 files |
 | Phase 07 P01 | 30 | 2 tasks | 12 files |
+| Phase 07 P02 | 20 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 07-01: moduleNameMapper shim (react-native-tcp-socket → net/tls, react-native → AppState stub) is the only code-change-free seam to run the library under Node jest
 - [Phase ?]: 07-01: RN connect-flow divergence (synchronous onConnect() + missing writable) recorded RECORD-ONLY in FINDINGS.md + known-gap assertion — no src/ patch in this test-scope phase
 - [Phase ?]: 07-01: detectVersion() only (no selectRecipe()) so 07-01 typechecks without importing 07-03's not-yet-existing recipe modules
+- [Phase ?]: 07-02: write-read connects once in beforeAll and runs detectVersion once to branch the resource CPU-field assertion (v6 cpu vs v7 cpu-load — field presence only, A2)
+- [Phase ?]: 07-02: stream() uses continuous /interface/monitor-traffic (no =once=) so pause/resume/stop have ongoing data to observe; endpoint trap -> per-device skip
+- [Phase ?]: 07-02: keepalive tests wait ~6s (past timeout/2 = 5s) and count 'error' events to assert the session never dropped
 
 ### Pending Todos
 
@@ -137,6 +141,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T20:24:47.006Z
-Stopped at: Completed 07-01-PLAN.md (integration harness + tracer + version probe)
+Last session: 2026-08-17T20:50:18.481Z
+Stopped at: Completed 07-02-PLAN.md (write/writeStream/stream/keepalive command-surface specs)
 Resume file: None
