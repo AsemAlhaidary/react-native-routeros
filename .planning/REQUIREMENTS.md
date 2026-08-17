@@ -62,9 +62,9 @@
 
 ### Documentation
 
-- [ ] **DOCS-01**: README includes installation, peer dependency setup, and Expo config plugin usage
-- [ ] **DOCS-02**: README includes complete code examples for connect, login, write, writeStream, stream, keepalive, close
-- [ ] **DOCS-03**: README clearly states Expo Go is NOT supported (requires custom dev client)
+- [x] **DOCS-01**: README includes installation, peer dependency setup, and Expo config plugin usage
+- [x] **DOCS-02**: README includes complete code examples for connect, login, write, writeStream, stream, keepalive, close
+- [x] **DOCS-03**: README clearly states Expo Go is NOT supported (requires custom dev client)
 
 ### Expo Integration
 
@@ -141,9 +141,9 @@ Deferred to future release.
 | BUILD-05 | Phase 5 | Complete |
 | LIFE-01 | Phase 4 | Complete |
 | LIFE-02 | Phase 4 | Complete |
-| DOCS-01 | Phase 5 | Pending |
-| DOCS-02 | Phase 5 | Pending |
-| DOCS-03 | Phase 5 | Pending |
+| DOCS-01 | Phase 5 | Complete |
+| DOCS-02 | Phase 5 | Complete |
+| DOCS-03 | Phase 5 | Complete |
 | EXPO-01 | Phase 5 | Pending |
 | EXPO-02 | Phase 5 | Pending |
 

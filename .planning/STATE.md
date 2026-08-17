@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 05
 current_phase_name: build-types-docs-expo-plugin
 status: executing
-stopped_at: Completed 05-01-PLAN.md (Build Pipeline + Package Contract)
-last_updated: "2026-08-17T13:48:00.219Z"
+stopped_at: Completed 05-02-PLAN.md (README documentation)
+last_updated: "2026-08-17T13:54:49.187Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 05 (build-types-docs-expo-plugin) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-17 — Phase 05 execution started
 
-Progress: [███████░░░] 71%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [███████░░░] 71%
 | Phase 03-commands-streaming P03 | 12 min | 4 tasks | 3 files |
 | Phase 04-robustness-lifecycle P04 | 14 min | 2 tasks | 3 files |
 | Phase 05-build-types-docs-expo-plugin P01 | 10 | 3 tasks | 3 files |
+| Phase 05 P02 | 2 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 05-01: types field + exports['.'].types point at ./lib/typescript/module/index.d.ts (builder-bob 0.43.0 actual output, not STACK.md's stale lib/typescript/src/ path)
 - [Phase ?]: 05-01: flat exports shape (types/react-native/import/require) retained per BUILD-03 despite builder-bob warning preferring nested import.types/require.types
 - [Phase ?]: 05-01: react-native-tcp-socket dual-listed in dependencies + peerDependencies (autolink + version pin)
+- [Phase ?]: 05-02: README documents connect() as performing login internally (no separate public login method) — matches RouterOSAPI private login()
+- [Phase ?]: 05-02: README documents TLS via tls: {} (defaults port 8729) and tls: { ca } for self-signed CAs — matches Connector/IRosOptions
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T13:48:00.206Z
-Stopped at: Completed 05-01-PLAN.md (Build Pipeline + Package Contract)
+Last session: 2026-08-17T13:54:49.174Z
+Stopped at: Completed 05-02-PLAN.md (README documentation)
 Resume file: None
