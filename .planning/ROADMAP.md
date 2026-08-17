@@ -143,12 +143,12 @@ Plans:
 **Goal:** Test the library end-to-end against real RouterOS devices (v6 and v7), exercising every public feature — connect/login (MD5 challenge-response), write, writeStream, stream, keepalive, reconnection, TLS, and error handling. Define multiple scenarios per version; perform CRUD (create/read/update/delete) across router services, with special focus on User Manager (create users, assign profiles, read/update/delete), plus reading data from other services. Research correct per-version RouterOS API commands (v6 vs v7 differ). Test devices: v6 = 192.168.187.128:8728, v7 = 192.168.187.130:8175 (admin/admin).
 **Requirements**: TBD
 **Depends on:** Phase 6
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — Integration harness (jest.integration.config + net/tls module-mapper shims + env gating + COVERAGE.md) + connect/login/write/close tracer against v6+v7
+- [x] 07-01-PLAN.md — Integration harness (jest.integration.config + net/tls module-mapper shims + env gating + COVERAGE.md) + connect/login/write/close tracer against v6+v7
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

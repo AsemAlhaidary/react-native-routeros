@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.6.8
 milestone_name: milestone
-current_phase: 5
-current_phase_name: Build, Types, Docs + Expo Plugin
+current_phase: 07
+current_phase_name: test-package-on-real-routeros-v6-and-v7-routers
 status: executing
-stopped_at: Completed 06-02-PLAN.md (scenario recipes + installation guide + README docs links)
-last_updated: "2026-08-17T19:48:25.659Z"
+stopped_at: Completed 07-01-PLAN.md (integration harness + tracer + version probe)
+last_updated: "2026-08-17T20:24:47.046Z"
 last_activity: 2026-08-17
-last_activity_desc: Phase 06 complete, transitioned to Phase 5
+last_activity_desc: Phase 07 execution started
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-10)
 
 **Core value:** A React Native app can connect to a MikroTik router, log in (RouterOS v6/v7), and issue write/writeStream/stream commands with the exact same developer experience as node-routeros — no Node.js runtime required.
-**Current focus:** Phase 06 — explore-and-define-the-features-of-this-package-and-how-to-u
+**Current focus:** Phase 07 — test-package-on-real-routeros-v6-and-v7-routers
 
 ## Current Position
 
-Phase: 5 — Build, Types, Docs + Expo Plugin
-Plan: Not started
+Phase: 07 (test-package-on-real-routeros-v6-and-v7-routers) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-08-17 — Phase 06 complete, transitioned to Phase 5
+Last activity: 2026-08-17 — Phase 07 execution started
 
-Progress: [██████████] 100%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: [██████████] 100%
 | Phase 05-build-types-docs-expo-plugin P03 | 14 min | 2 tasks | 8 files |
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P01 | 7 min | 2 tasks | 2 files |
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P02 | 5 | 3 tasks | 3 files |
+| Phase 07 P01 | 30 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 06-02: EXAMPLES.md uses placeholder credentials ('admin'/'password') with explicit env-var/secure-key-store note - intentional per threat-model T-06-01, not a stub
 - [Phase ?]: 06-02: EXAMPLES.md organized as 12 scenario sections + writeStream + full program, mirroring the plan's required scenario list
 - [Phase ?]: 06-02: INSTALLATION.md dual-path (Bare RN -> Expo dev client) with config-plugin behavior described verbatim from plugin/src/withAndroid.ts (throws + INTERNET/cleartextTraffic) and withIos.ts (non-fatal warning)
+- [Phase ?]: 07-01: moduleNameMapper shim (react-native-tcp-socket → net/tls, react-native → AppState stub) is the only code-change-free seam to run the library under Node jest
+- [Phase ?]: 07-01: RN connect-flow divergence (synchronous onConnect() + missing writable) recorded RECORD-ONLY in FINDINGS.md + known-gap assertion — no src/ patch in this test-scope phase
+- [Phase ?]: 07-01: detectVersion() only (no selectRecipe()) so 07-01 typechecks without importing 07-03's not-yet-existing recipe modules
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T15:29:51.936Z
-Stopped at: Completed 06-02-PLAN.md (scenario recipes + installation guide + README docs links)
+Last session: 2026-08-17T20:24:47.006Z
+Stopped at: Completed 07-01-PLAN.md (integration harness + tracer + version probe)
 Resume file: None
