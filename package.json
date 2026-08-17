@@ -49,12 +49,14 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "build": "bob build"
+    "build": "bob build && tsc -p plugin/tsconfig.json",
+    "build:plugin": "tsc -p plugin/tsconfig.json"
   },
   "devDependencies": {
     "@types/debug": "^4.1",
     "@types/events": "^3.0.3",
     "@types/jest": "^30.0.0",
+    "expo": "^57.0.14",
     "jest": "^30.0.0",
     "react-native-builder-bob": "^0.43.0",
     "ts-jest": "^29.0.0",
