@@ -4,16 +4,16 @@ milestone: v1.6.8
 milestone_name: milestone
 current_phase: 07
 current_phase_name: test-package-on-real-routeros-v6-and-v7-routers
-status: executing
-stopped_at: Completed 07-02-PLAN.md (write/writeStream/stream/keepalive command-surface specs)
-last_updated: "2026-08-17T20:50:18.514Z"
+status: verifying
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-08-17T21:34:55.121Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 07 execution started
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 
 Phase: 07 (test-package-on-real-routeros-v6-and-v7-routers) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-17 — Phase 07 execution started
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [█████████░] 92%
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P02 | 5 | 3 tasks | 3 files |
 | Phase 07 P01 | 30 | 2 tasks | 12 files |
 | Phase 07 P02 | 20 | 2 tasks | 4 files |
+| Phase 07 P07-03 | 20 | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,10 @@ Recent decisions affecting current work:
 - [Phase ?]: 07-02: write-read connects once in beforeAll and runs detectVersion once to branch the resource CPU-field assertion (v6 cpu vs v7 cpu-load — field presence only, A2)
 - [Phase ?]: 07-02: stream() uses continuous /interface/monitor-traffic (no =once=) so pause/resume/stop have ongoing data to observe; endpoint trap -> per-device skip
 - [Phase ?]: 07-02: keepalive tests wait ~6s (past timeout/2 = 5s) and count 'error' events to assert the session never dropped
+- [Phase ?]: 07-03: v6 User Manager paths/fields ASSUMED (/tool user-manager, =username=), v7 CITED (/user-manager, =name=) — self-diagnosing read-back-before-assert (A1)
+- [Phase ?]: 07-03: v6 link/router are v7-only (no user-profile link table; router is the v7 NAS client) — throwing stubs + version-gated skip
+- [Phase ?]: 07-03: runCrud update asserts persistence + stable .id (passwords write-only on read-back); recipe fieldForName distinguishes USER field only (profiles use name on both)
+- [Phase ?]: 07-03: !empty (Finding 2) + onError numeric-errno (Finding 3) recorded RECORD-ONLY in FINDINGS.md — no src/ patch in this test-scope phase
 
 ### Pending Todos
 
@@ -141,6 +146,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T20:50:18.481Z
-Stopped at: Completed 07-02-PLAN.md (write/writeStream/stream/keepalive command-surface specs)
+Last session: 2026-08-17T21:34:01.035Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
