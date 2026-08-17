@@ -43,17 +43,17 @@
 
 ### TypeScript Types
 
-- [ ] **TYPE-01**: Library ships .d.ts type definitions for all public exports
+- [x] **TYPE-01**: Library ships .d.ts type definitions for all public exports
 - [x] **TYPE-02**: IRosOptions interface is exported (host, port, timeout, TLS, credentials)
 - [x] **TYPE-03**: IRosGenericResponse interface is exported
 
 ### Build & Package
 
-- [ ] **BUILD-01**: Library compiles cleanly with TypeScript (~5.9.x), targeting React Native runtime (no Node APIs)
-- [ ] **BUILD-02**: react-native-builder-bob produces dual CJS + ESM output
-- [ ] **BUILD-03**: package.json includes a react-native exports condition pointing to correct output
-- [ ] **BUILD-04**: Peer dependencies (react, react-native, react-native-tcp-socket) are correctly declared
-- [ ] **BUILD-05**: Runtime dependencies are minimal: react-native-tcp-socket, js-md5, events
+- [x] **BUILD-01**: Library compiles cleanly with TypeScript (~5.9.x), targeting React Native runtime (no Node APIs)
+- [x] **BUILD-02**: react-native-builder-bob produces dual CJS + ESM output
+- [x] **BUILD-03**: package.json includes a react-native exports condition pointing to correct output
+- [x] **BUILD-04**: Peer dependencies (react, react-native, react-native-tcp-socket) are correctly declared
+- [x] **BUILD-05**: Runtime dependencies are minimal: react-native-tcp-socket, js-md5, events, debug
 
 ### Lifecycle & Robustness
 
@@ -131,14 +131,14 @@ Deferred to future release.
 | ERR-02 | Phase 4 | Complete |
 | ERR-03 | Phase 2 | Done |
 | ERR-04 | Phase 1 | Done |
-| TYPE-01 | Phase 5 | Pending |
+| TYPE-01 | Phase 5 | Complete |
 | TYPE-02 | Phase 1 | Done |
 | TYPE-03 | Phase 1 | Done |
-| BUILD-01 | Phase 5 | Pending |
-| BUILD-02 | Phase 5 | Pending |
-| BUILD-03 | Phase 5 | Pending |
-| BUILD-04 | Phase 5 | Pending |
-| BUILD-05 | Phase 5 | Pending |
+| BUILD-01 | Phase 5 | Complete |
+| BUILD-02 | Phase 5 | Complete |
+| BUILD-03 | Phase 5 | Complete |
+| BUILD-04 | Phase 5 | Complete |
+| BUILD-05 | Phase 5 | Complete |
 | LIFE-01 | Phase 4 | Complete |
 | LIFE-02 | Phase 4 | Complete |
 | DOCS-01 | Phase 5 | Pending |
