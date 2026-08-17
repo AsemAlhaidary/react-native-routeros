@@ -5,6 +5,16 @@
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/module/index.d.ts",
+  "source": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/typescript/module/index.d.ts",
+      "react-native": "./src/index.ts",
+      "import": "./lib/module/index.js",
+      "require": "./lib/commonjs/index.js"
+    }
+  },
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
@@ -29,6 +39,12 @@
     "routeros",
     "mikrotik",
     "react-native"
+  ],
+  "files": [
+    "lib",
+    "src",
+    "app.plugin.js",
+    "plugin/build"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
