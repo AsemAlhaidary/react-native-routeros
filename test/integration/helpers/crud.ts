@@ -107,27 +107,15 @@ export async function runCrud(
   if (!id) {
     id = created?.['.id'];
   }
-  expect(
-    created,
-    `${entityKind} '${name}' should be present after create`
-  ).toBeDefined();
-  expect(
-    id,
-    `${entityKind} '${name}' should carry a router-assigned .id`
-  ).toBeDefined();
+  expect(created).toBeDefined();
+  expect(id).toBeDefined();
 
   // UPDATE — assert the set command succeeds and the entity persists (stable id).
   if (spec.set) {
     await api.write(spec.set(id as string));
     const updated = await readByName(api, spec.read, fieldForName, name);
-    expect(
-      updated,
-      `${entityKind} '${name}' should persist after update`
-    ).toBeDefined();
-    expect(
-      updated?.['.id'],
-      `${entityKind} '${name}' .id should be stable across update`
-    ).toBe(id);
+    expect(updated).toBeDefined();
+    expect(updated?.['.id']).toBe(id);
   }
 
   // DELETE.
@@ -135,7 +123,10 @@ export async function runCrud(
 
   // READ — assert gone.
   const gone = await readByName(api, spec.read, fieldForName, name);
-  expect(gone, `${entityKind} '${name}' should be gone after delete`).toBeUndefined();
+  expect(gone).toBeUndefined();
+  // `entityKind` is part of the planned runCrud signature (traceability) but is
+  // not otherwise consumed by the generic runner.
+  void entityKind;
 }
 
 /**
