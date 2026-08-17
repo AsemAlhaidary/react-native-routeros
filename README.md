@@ -240,7 +240,8 @@ const api = new RouterOSAPI({
   host: 'router.example.com',
   user: 'admin',
   password: 'password',
-  tls: {}, // enables TLS; defaults to port 8729 when no port is given
+  port: 8729, // required — TLS does not auto-select the port
+  tls: {}, // enables TLS
 });
 
 // To trust a self-signed CA (RouterOS default), provide the PEM content:

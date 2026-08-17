@@ -46,7 +46,7 @@ Connection options passed to the `RouterOSAPI` constructor and `setOptions()`.
 | `host` | `string` | **yes** | — | RouterOS device hostname or IP address |
 | `user` | `string` | no | `''` | Login username |
 | `password` | `string` | no | `''` | Login password |
-| `port` | `number` | no | `8728` (plain) / `8729` (TLS) | API port; TLS auto-selects 8729 when `tls` is set and `port` is omitted |
+| `port` | `number` | no | `8728` | API port. TLS does **not** auto-select 8729 — pass `port: 8729` explicitly when using TLS |
 | `timeout` | `number` | no | `10` | Socket/command timeout in seconds |
 | `tls` | `TlsRnOptions` | no | `undefined` | Presence enables TLS; pass options to pin certificates |
 | `keepalive` | `boolean` | no | `false` | When `true`, automatically runs `keepaliveBy('#')` after connect |
@@ -80,9 +80,9 @@ Options for the lower-level `Connector` class.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `host` | `string` | **yes** | — | RouterOS hostname or IP |
-| `port` | `number` | no | `8728` (or `8729` if `tls` set and no port) | API port |
+| `port` | `number` | no | `8728` | API port |
 | `timeout` | `number` | no | `10` | Timeout in seconds |
-| `tls` | `boolean \| TlsRnOptions` | no | `undefined` | `true` enables TLS with defaults; object enables TLS with options |
+| `tls` | `boolean \| TlsRnOptions` | no | `undefined` | `true` enables TLS with defaults (port stays 8728); object form enables TLS with options and selects port 8729 only when `port` is omitted |
 
 ### `CreateSocketOptions`
 

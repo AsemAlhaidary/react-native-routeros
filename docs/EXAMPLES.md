@@ -245,11 +245,12 @@ The library subscribes to React Native's `AppState` **internally** to verify its
 The RouterOS API defaults to plain TCP on port 8728, which is cleartext. For access outside a trusted local network, use TLS on port 8729.
 
 ```typescript
-// Enable TLS with defaults — port auto-selects 8729 when no port is given
+// Enable TLS — pass port 8729 explicitly (TLS does not auto-select the port)
 const tlsApi = new RouterOSAPI({
   host: 'router.example.com',
   user: 'admin',
   password: 'password',
+  port: 8729,
   tls: {}, // enables TLS
 });
 await tlsApi.connect();
