@@ -63,3 +63,192 @@ The plugin auto-links `react-native-tcp-socket` and applies the Android `INTERNE
 `react-native-routeros` requires the `react-native-tcp-socket` native module to open raw TCP sockets. Expo Go does not bundle this native module and cannot load arbitrary native code. You must use a custom dev client, which you create by running `npx expo prebuild` followed by `npx expo run:ios` / `npx expo run:android`, or by building through EAS Build.
 
 Do not attempt to run this library inside Expo Go — the connection will fail because the native TCP module is unavailable.
+
+## Usage
+
+Import the public API from `react-native-routeros`:
+
+```typescript
+import { RouterOSAPI, RStream, RosException } from 'react-native-routeros';
+```
+
+### Connect and login
+
+Construct a `RouterOSAPI` with connection options and call `connect()`. Login is performed automatically inside `connect()` using the RouterOS MD5 challenge-response flow (RouterOS v6/v7), so there is no separate public login method — the connect call is the login call.
+
+`connect()` resolves to the `RouterOSAPI` instance on success and rejects with a `RosException` on failure.
+
+```typescript
+import { RouterOSAPI, RosException } from 'react-native-routeros';
+
+const api = new RouterOSAPI({
+  host: '192.168.88.1',
+  user: 'admin',
+  password: 'password',
+  timeout: 10,
+});
+
+async function main() {
+  try {
+    await api.connect();
+    console.log('Connected and logged in');
+  } catch (err) {
+    if (err instanceof RosException) {
+      console.error('Login failed:', err.errno, err.message);
+    } else {
+      console.error('Connection error:', err);
+    }
+  }
+}
+```
+
+> Never hardcode real credentials in production code. Use environment variables or a secure key store.
+
+### write
+
+`write()` sends a one-shot command and resolves to an array of parsed response objects on `!done`. It rejects with a `RosException` on `!trap`.
+
+```typescript
+try {
+  const addresses = await api.write('/ip/address/print');
+  for (const address of addresses) {
+    console.log(address.address, address.interface);
+  }
+} catch (err) {
+  console.error('Write failed:', err);
+}
+```
+
+You can also pass command parameters as an array:
+
+```typescript
+const ether = await api.write('/interface/print', ['=type=ether']);
+```
+
+### writeStream
+
+`writeStream()` returns an `RStream` that emits `data` (each sentence), `done`, `trap`, and `close` events.
+
+```typescript
+const stream: RStream = api.writeStream('/interface/print', ['=type=ether']);
+
+stream.on('data', (packet) => {
+  console.log('Interface:', packet.name, packet.type);
+});
+stream.on('done', () => {
+  console.log('Stream finished');
+});
+stream.on('trap', (data) => {
+  console.error('Stream trap:', data.message);
+});
+stream.on('close', () => {
+  console.log('Stream closed');
+});
+```
+
+### stream
+
+`stream()` is for continuous endpoints that keep sending data, such as `/ip/address/listen` or `/tool/torch`. It returns an `RStream` (with empty-data debouncing enabled) and also accepts an optional callback as the last argument.
+
+```typescript
+const listen = api.stream('/ip/address/listen');
+
+listen.on('data', (packet) => {
+  console.log('Address update:', packet);
+});
+```
+
+Optional callback form:
+
+```typescript
+api.stream('/tool/torch', ['=interface=ether1'], (err, packet, stream) => {
+  if (err) {
+    console.error('Torch error:', err.message);
+    return;
+  }
+  console.log('Torch packet:', packet);
+});
+```
+
+The returned `RStream` supports `pause()`, `resume()`, and `stop()`:
+
+```typescript
+await listen.pause();
+// ... later ...
+await listen.resume();
+// ... when finished ...
+await listen.stop();
+```
+
+### keepalive
+
+`keepaliveBy()` runs a command at a fixed interval to keep the session alive.
+
+```typescript
+api.keepaliveBy('#');
+```
+
+You can also enable keepalive automatically on connect by setting `keepalive: true` in the constructor options:
+
+```typescript
+const api = new RouterOSAPI({
+  host: '192.168.88.1',
+  user: 'admin',
+  password: 'password',
+  keepalive: true,
+});
+```
+
+### close
+
+`close()` gracefully closes the connection. The instance can be reconnected afterward via `setOptions()` then `connect()`.
+
+```typescript
+await api.close();
+
+// Reconnect later with new credentials
+api.setOptions({
+  host: '192.168.88.1',
+  user: 'admin',
+  password: 'new-password',
+});
+await api.connect();
+```
+
+### Lifecycle events
+
+`RouterOSAPI` extends `EventEmitter` and emits lifecycle events for reconnection awareness:
+
+```typescript
+api.on('close', () => {
+  console.log('Connection closed');
+});
+api.on('error', (err) => {
+  console.error('Connection error:', err);
+});
+api.on('fatal', () => {
+  console.error('Protocol fatal error — connection terminated');
+});
+```
+
+### TLS
+
+The RouterOS API defaults to plain TCP on port 8728, which is cleartext. For access outside a trusted local network, use TLS on port 8729:
+
+```typescript
+const api = new RouterOSAPI({
+  host: 'router.example.com',
+  user: 'admin',
+  password: 'password',
+  tls: {}, // enables TLS; defaults to port 8729 when no port is given
+});
+
+// To trust a self-signed CA (RouterOS default), provide the PEM content:
+const apiTls = new RouterOSAPI({
+  host: 'router.example.com',
+  user: 'admin',
+  password: 'password',
+  port: 8729,
+  tls: { ca: /* PEM certificate content */ },
+});
+```
