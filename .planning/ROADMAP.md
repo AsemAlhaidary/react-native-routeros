@@ -98,7 +98,7 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
   7. README clearly states Expo Go is not supported (custom dev client required)
   8. Expo config plugin auto-links react-native-tcp-socket and sets Android cleartextTraffic + INTERNET permission
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 
 ### Wave 1
 
@@ -107,7 +107,7 @@ A from-scratch TypeScript rewrite of the `node-routeros` v1.6.8 API for React Na
 
 ### Wave 2 *(blocked on Wave 1 completion)*
 
-- [ ] 05-03-PLAN.md — Expo config plugin: `app.plugin.js` + `plugin/src/*` (INTERNET + cleartextTraffic, tcp-socket auto-link)
+- [x] 05-03-PLAN.md — Expo config plugin: `app.plugin.js` + `plugin/src/*` (INTERNET + cleartextTraffic, tcp-socket auto-link)
 
 ## Progress
 
@@ -120,4 +120,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Protocol + Connection | 1/1 | Complete | 2026-08-10 |
 | 3. Commands + Streaming | 1/1 | Complete | 2026-08-10 |
 | 4. Robustness + Lifecycle | 1/1 | Complete | 2026-08-10 |
-| 5. Build, Types, Docs + Expo Plugin | 2/3 | In Progress|  |
+| 5. Build, Types, Docs + Expo Plugin | 3/3 | In Progress|  |

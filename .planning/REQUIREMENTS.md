@@ -68,8 +68,8 @@
 
 ### Expo Integration
 
-- [ ] **EXPO-01**: Library includes Expo config plugin that auto-links react-native-tcp-socket
-- [ ] **EXPO-02**: Config plugin sets Android cleartextTraffic=true and INTERNET permission for plain TCP
+- [x] **EXPO-01**: Library includes Expo config plugin that auto-links react-native-tcp-socket
+- [x] **EXPO-02**: Config plugin sets Android cleartextTraffic=true and INTERNET permission for plain TCP
 
 ## v2 Requirements
 
@@ -144,8 +144,8 @@ Deferred to future release.
 | DOCS-01 | Phase 5 | Complete |
 | DOCS-02 | Phase 5 | Complete |
 | DOCS-03 | Phase 5 | Complete |
-| EXPO-01 | Phase 5 | Pending |
-| EXPO-02 | Phase 5 | Pending |
+| EXPO-01 | Phase 5 | Complete |
+| EXPO-02 | Phase 5 | Complete |
 
 **Coverage:**
 
