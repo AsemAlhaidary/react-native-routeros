@@ -4,16 +4,16 @@ milestone: v1.6.8
 milestone_name: milestone
 current_phase: 06
 current_phase_name: explore-and-define-the-features-of-this-package-and-how-to-u
-status: executing
-stopped_at: Completed 06-01-PLAN.md (canonical example + API reference)
-last_updated: "2026-08-17T15:20:20.289Z"
+status: verifying
+stopped_at: Completed 06-02-PLAN.md (scenario recipes + installation guide + README docs links)
+last_updated: "2026-08-17T15:30:10.415Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 
 Phase: 06 (explore-and-define-the-features-of-this-package-and-how-to-u) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-17 — Phase 06 execution started
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [█████████░] 89%
 | Phase 05 P02 | 2 | 2 tasks | 1 files |
 | Phase 05-build-types-docs-expo-plugin P03 | 14 min | 2 tasks | 8 files |
 | Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P01 | 7 min | 2 tasks | 2 files |
+| Phase 06-explore-and-define-the-features-of-this-package-and-how-to-u P02 | 5 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase ?]: plugin/build/ gitignored (consistent with lib/) - build output shipped via package.json files, not committed to git
 - [Phase ?]: 06-01: example uses placeholder credentials ('admin'/'password') with explicit env-var/secure-key-store comment - intentional per threat-model T-06-01, not a stub
 - [Phase ?]: 06-01: docs/API.md organized by subsystem (types > RouterOSAPI > RStream > lower-level classes > errors > codec/utils > transport) mirroring src/index.ts export grouping
+- [Phase ?]: 06-02: EXAMPLES.md uses placeholder credentials ('admin'/'password') with explicit env-var/secure-key-store note - intentional per threat-model T-06-01, not a stub
+- [Phase ?]: 06-02: EXAMPLES.md organized as 12 scenario sections + writeStream + full program, mirroring the plan's required scenario list
+- [Phase ?]: 06-02: INSTALLATION.md dual-path (Bare RN -> Expo dev client) with config-plugin behavior described verbatim from plugin/src/withAndroid.ts (throws + INTERNET/cleartextTraffic) and withIos.ts (non-fatal warning)
 
 ### Pending Todos
 
@@ -127,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T15:20:01.853Z
-Stopped at: Completed 06-01-PLAN.md (canonical example + API reference)
+Last session: 2026-08-17T15:29:51.936Z
+Stopped at: Completed 06-02-PLAN.md (scenario recipes + installation guide + README docs links)
 Resume file: None

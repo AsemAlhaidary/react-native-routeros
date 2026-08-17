@@ -127,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 **Goal**: A developer can install react-native-routeros on Bare React Native or an Expo custom dev client, understand every public feature from a complete API reference, and copy working real-world examples covering connect/login, write, writeStream, stream, keepalive, close, reconnection, and TLS — all grounded in the shipped API.
 **Requirements**: none (documentation phase — no mapped requirement IDs)
 **Depends on:** Phase 5
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 
 Plans:
 **Wave 1**
@@ -136,4 +136,4 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02-PLAN.md — Real-world scenario recipes (docs/EXAMPLES.md) + installation guide (docs/INSTALLATION.md) + README Documentation links
+- [x] 06-02-PLAN.md — Real-world scenario recipes (docs/EXAMPLES.md) + installation guide (docs/INSTALLATION.md) + README Documentation links
