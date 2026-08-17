@@ -130,6 +130,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 **Plans:** 2 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 06-01-PLAN.md — Canonical connect → login → write → close example (tracer) + full API/feature reference (docs/API.md)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 06-02-PLAN.md — Real-world scenario recipes (docs/EXAMPLES.md) + installation guide (docs/INSTALLATION.md) + README Documentation links
