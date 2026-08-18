@@ -22,5 +22,8 @@ module.exports = {
     '^react-native-tcp-socket$':
       '<rootDir>/test/integration/mocks/react-native-tcp-socket.ts',
   },
-  testTimeout: 30000, // real-device latency + MD5 login + command round-trips
+  // 60s: the lab v6 router holds +40K user-manager users and +200K sessions, so
+  // full fetch-all CRUD steps (3 reads per test + sweep reads) need a long
+  // per-test window. Also caps beforeAll/afterAll hooks.
+  testTimeout: 60000,
 };

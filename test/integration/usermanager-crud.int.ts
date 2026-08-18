@@ -71,7 +71,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         );
         userManagerAvailable = false;
       }
-    }, 30000);
+    }, 60000);
 
     afterAll(async () => {
       if (api && available && recipe) {
@@ -85,6 +85,8 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
               recipe!.userManager.profileDel,
               prefix
             ),
+          // v6 user sweep fetch-alls 40,860 users — needs the 60s socket/test
+          // window (old 10s timeout hung the connection).
           () =>
             sweepByPrefix(
               api!,
@@ -110,7 +112,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         }
         api = null;
       }
-    }, 30000);
+    }, 60000);
 
     test('profile CRUD: add → read → set validity → read → del → gone', async () => {
       if (!available || !userManagerAvailable) return;
@@ -123,11 +125,15 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         fieldForName: 'name', // profiles use `name` on both v6 and v7
         prefix,
       });
-    }, 30000);
+    }, 60000);
 
     test('user CRUD: add → read → set password → read → del → gone', async () => {
       if (!available || !userManagerAvailable) return;
       expect(recipe).not.toBeNull();
+      // v6 user add needs `=customer=asem` (hardcoded in recipes/v6.ts). The
+      // lab v6 user table has 40,860 rows and each fetch-all takes ~23s
+      // (measured), so this test's THREE reads need a 120s window — the 60s
+      // window timed out cleanly with the Receiver fix in place.
       await runCrud(api!, recipe!, 'user', {
         add: (name) => recipe!.userManager.userAdd(name, 'gsd-itest-pw'),
         read: () => recipe!.userManager.userRead(),
@@ -136,7 +142,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         fieldForName: recipe!.fieldForName, // v6 `username` / v7 `name`
         prefix,
       });
-    }, 30000);
+    }, 120000);
 
     test('link: user-profile add → read → remove (v7 only)', async () => {
       if (!available || !userManagerAvailable) return;
@@ -178,7 +184,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
           // best-effort
         }
       }
-    }, 30000);
+    }, 60000);
 
     test('router: add → read → remove (v7 only)', async () => {
       if (!available || !userManagerAvailable) return;
@@ -204,7 +210,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
           // best-effort
         }
       }
-    }, 30000);
+    }, 60000);
   });
 }
 

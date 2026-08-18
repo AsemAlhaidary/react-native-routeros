@@ -36,6 +36,10 @@ export class RosException extends Error {
       this.message = message;
     } else if (message) {
       this.message = message;
+    } else if (extras && extras.message) {
+      // errno unknown to the catalog (e.g. TLS/network codes like
+      // ERR_SSL_SSLV3_ALERT_HANDSHAKE_FAILURE) — surface the raw message
+      this.message = extras.message;
     }
   }
 }

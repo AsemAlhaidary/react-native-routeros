@@ -203,11 +203,16 @@ export class Connector extends EventEmitter {
    * Socket error handler.
    * Wraps the error in RosException (if not already) and emits 'error'.
    * Destroys the socket — errors are terminal for the connection.
+   *
+   * Defensive: RN-TCP (and Node tls) can surface errors with no errno,
+   * a `code` instead of `errno`, or in rare cases no argument at all.
    */
-  private onError(err: Error & { errno?: string }): void {
+  private onError(err?: Error & { errno?: string; code?: string }): void {
+    const code = (err && (err.code || err.errno)) || 'ECONNREFUSED';
+    const message = (err && err.message) || 'Unknown socket error';
     const rosErr = err instanceof RosException
       ? err
-      : new RosException(err.errno || 'ECONNREFUSED', { message: err.message });
+      : new RosException(code, { message });
     debugError(
       'Problem while trying to connect to %s. Error: %s',
       this.host,

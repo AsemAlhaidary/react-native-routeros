@@ -57,6 +57,11 @@ export function reachable(
 
 /**
  * Build a RouterOSAPI client from a device config + env credentials.
+ *
+ * Socket timeout is 60s: the lab v6 router holds +40K user-manager users and
+ * +200K sessions, so full fetch-all reads need a long command window (the old
+ * 10s default was too short — full `user/print` hung and poisoned the
+ * connection with an unhandled SOCKTMOUT).
  */
 export function buildClient(cfg: DeviceConfig): RouterOSAPI {
   return new RouterOSAPI({
@@ -64,7 +69,7 @@ export function buildClient(cfg: DeviceConfig): RouterOSAPI {
     port: cfg.port,
     user: process.env.ROUTEROS_USER,
     password: process.env.ROUTEROS_PASSWORD,
-    timeout: 10,
+    timeout: 60,
   });
 }
 
@@ -82,4 +87,30 @@ export function v7Config(): DeviceConfig {
     host: process.env.ROUTEROS_V7_HOST || '',
     port: parseInt(process.env.ROUTEROS_V7_PORT || '8175', 10),
   };
+}
+
+/**
+ * True when a connect error is a TLS handshake rejection.
+ *
+ * The lab's API-SSL endpoint (v6 8729) refuses standard TLS handshakes with an
+ * SSL alert (code `ERR_SSL_SSLV3_ALERT_HANDSHAKE_FAILURE` or `EPROTO` on Node).
+ * Those are lab limitations, not library bugs — callers may skip on them.
+ * Every other error shape is treated as a real failure.
+ */
+export function isTlsHandshakeFailure(
+  err: unknown
+): boolean {
+  if (err instanceof Error) {
+    const code = (err as any).errno || (err as any).code;
+    if (typeof code === 'string' && code.includes('SSL')) {
+      return true;
+    }
+    if (typeof code === 'string' && code === 'EPROTO') {
+      return true;
+    }
+    if (/handshake|SSL alert|ssl/i.test(err.message || '')) {
+      return true;
+    }
+  }
+  return false;
 }

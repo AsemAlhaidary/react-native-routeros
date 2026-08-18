@@ -475,7 +475,6 @@ export class RouterOSAPI extends EventEmitter {
       this.unregisterStream(stream);
       this.decreaseChannelsOpen();
       this.releaseConnectionHold();
-      stream.removeAllListeners();
     });
 
     stream.start();

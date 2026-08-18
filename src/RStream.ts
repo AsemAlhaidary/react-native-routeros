@@ -64,6 +64,29 @@ export class RStream extends EventEmitter {
   /** Waiting timeout before sending received section packets */
   private sectionPacketSendingTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  /** Bound 'close' handler: stable reference so start() never stacks duplicates */
+  private readonly boundOnClose = (): void => {
+    if (this.forcelyStop || (!this.pausing && !this.paused)) {
+      if (!this.trapped) {
+        this.emit('done');
+      }
+      this.emit('close');
+    }
+    this.stopped = false;
+  };
+
+  /** Bound 'stream' handler: stable reference so start() never stacks duplicates */
+  private readonly boundOnStream = (packet: Record<string, any>): void => {
+    if (this.debounceSendingEmptyData) {
+      this.debounceSendingEmptyData.run();
+    }
+    this.onStream(packet);
+  };
+
+  /** Bound one-shot handlers (re-armed on each start) */
+  private readonly boundOnTrap = this.onTrap.bind(this);
+  private readonly boundOnDone = this.onDone.bind(this);
+
   /**
    * Constructor, it does NOT start the streaming automatically.
    * Call .start() after construction to begin.
@@ -201,26 +224,23 @@ export class RStream extends EventEmitter {
    * Called by RouterOSAPI.writeStream() and RouterOSAPI.stream().
    */
   start(): void {
+    debugInfo('start() called: stopped=%s stopping=%s streaming=%s tag=%s', this.stopped, this.stopping, this.streaming, this.channel.Id);
     if (!this.stopped && !this.stopping) {
-      this.channel.on('close', () => {
-        if (this.forcelyStop || (!this.pausing && !this.paused)) {
-          if (!this.trapped) {
-            this.emit('done');
-          }
-          this.emit('close');
-        }
-        this.stopped = false;
-      });
+      // 'stream' and 'close' are persistent channel listeners. Remove-then-add
+      // keeps exactly one copy each, so resume() → start() (which re-runs this
+      // block) does not stack duplicates and double every packet.
+      this.channel.removeListener('close', this.boundOnClose);
+      this.channel.removeListener('stream', this.boundOnStream);
+      this.channel.on('close', this.boundOnClose);
+      this.channel.on('stream', this.boundOnStream);
 
-      this.channel.on('stream', (packet: Record<string, any>) => {
-        if (this.debounceSendingEmptyData) {
-          this.debounceSendingEmptyData.run();
-        }
-        this.onStream(packet);
-      });
-
-      this.channel.once('trap', this.onTrap.bind(this));
-      this.channel.once('done', this.onDone.bind(this));
+      // 'trap'/'done' are one-shot. Re-arm exactly one of each on every start:
+      // the trap once-listener is consumed by the 'interrupted' reply during
+      // pause(), and the stream channel stays alive across pause/resume.
+      this.channel.removeListener('trap', this.boundOnTrap);
+      this.channel.removeListener('done', this.boundOnDone);
+      this.channel.once('trap', this.boundOnTrap);
+      this.channel.once('done', this.boundOnDone);
 
       this.channel.write(this.params.slice(), true, false);
       this.emit('started');
@@ -272,6 +292,7 @@ export class RStream extends EventEmitter {
    * sent as a group after a 300ms timeout to group related data.
    */
   private onStream(packet: Record<string, any>): void {
+    debugInfo('onStream() emitting data: tag=%s keys=%d', this.channel.Id, Object.keys(packet).length);
     this.emit('data', packet);
 
     if (this.callback) {

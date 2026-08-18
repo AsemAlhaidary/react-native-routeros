@@ -1,12 +1,19 @@
 import createDebug from 'debug';
 import { decodeWin1252 } from './win1252';
-import { RosException } from './RosException';
 import { RosSocket } from './transport/SocketAdapter';
 
 const debug = createDebug('routeros-api:connector:receiver');
 
 /** Single 0x00 byte — RouterOS sentence terminator */
 const NULL_BYTE = new Uint8Array([0x00]);
+
+/** Compact line descriptor for trace logging — content for control lines, length for data lines. */
+function describeLine(line: string): string {
+  if (line.startsWith('!') || line.startsWith('.tag=')) {
+    return line;
+  }
+  return `data(${line.length})`;
+}
 
 interface TagEntry {
   name: string;
@@ -91,6 +98,13 @@ export class Receiver {
    * @param data  Raw bytes from socket 'data' event.
    */
   processRawData(data: Uint8Array): void {
+    debug(
+      'processRawData: %d bytes (dataLength=%d, lengthDescriptorSegment=%d, currentLine=%d chars)',
+      data.length,
+      this.dataLength,
+      this.lengthDescriptorSegment ? this.lengthDescriptorSegment.length : 0,
+      this.currentLine.length
+    );
     // If we have a partial length descriptor from a previous chunk,
     // prepend it to the new data.
     if (this.lengthDescriptorSegment) {
@@ -115,11 +129,21 @@ export class Receiver {
           this.currentLine += decodeWin1252(data);
           // If we've consumed the full word
           if (this.dataLength === 0) {
-            // Push the sentence to the pipe
+            // Push the sentence to the pipe. hadMore mirrors the original
+            // node-routeros expression: data.length !== this.dataLength.
+            // Here dataLength just reached 0 while data.length >= 1, so
+            // hadMore is always true — a chunk ending at a word boundary
+            // does NOT mean the response is complete.
             this.sentencePipe.push({
               sentence: this.currentLine,
-              hadMore: false, // data.length is 0 here since we consumed all
+              hadMore: data.length !== this.dataLength,
             });
+            debug(
+              'Word completed exactly at chunk boundary: %s (hadMore=%s, data.length=%d)',
+              describeLine(this.currentLine),
+              data.length !== this.dataLength,
+              data.length
+            );
             // Process the sentence and clear the line
             this.processSentence();
             this.currentLine = '';
@@ -225,6 +249,13 @@ export class Receiver {
           }
           // If the pipe is drained and no more data is expected...
           if (this.sentencePipe.length === 0 && this.dataLength === 0) {
+            debug(
+              'Drain check on %s: hadMore=%s, currentTag=%s, currentPacket has %d lines',
+              describeLine(line.sentence),
+              line.hadMore,
+              this.currentTag || '(none)',
+              this.currentPacket.length
+            );
             if (!line.hadMore && this.currentTag) {
               debug(
                 'No more sentences to process, will send data to tag %s',
@@ -257,7 +288,15 @@ export class Receiver {
       debug('Sending to tag %s the packet %O', tag.name, this.currentPacket);
       tag.callback(this.currentPacket);
     } else {
-      throw new RosException('UNREGISTEREDTAG');
+      // A late response for an already-closed channel (e.g. a keepalive '#'
+      // reply arriving after its channel was torn down during close()). The
+      // original node-routeros throws UNREGISTEREDTAG here, which surfaces as
+      // an uncaught exception in the socket data handler and kills the process.
+      // Degrade gracefully instead: ignore the orphaned packet.
+      debug(
+        'Received data on unregistered tag %s — ignoring (late response for a closed channel)',
+        currentTag
+      );
     }
     this.cleanUp();
   }
