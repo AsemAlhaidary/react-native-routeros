@@ -35,6 +35,18 @@
     ]
   },
   "license": "MIT",
+  "author": {
+    "name": "AsemAlhaidary",
+    "email": "asemalhaidary.2001@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsemAlhaidary/react-native-routeros.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AsemAlhaidary/react-native-routeros/issues"
+  },
+  "homepage": "https://github.com/AsemAlhaidary/react-native-routeros",
   "keywords": [
     "routeros",
     "mikrotik",
@@ -44,14 +56,18 @@
     "lib",
     "src",
     "app.plugin.js",
-    "plugin/build"
+    "plugin/build",
+    "docs",
+    "examples"
   ],
+  "sideEffects": false,
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:integration": "jest -c jest.integration.config.js",
     "build": "bob build && tsc -p plugin/tsconfig.json",
-    "build:plugin": "tsc -p plugin/tsconfig.json"
+    "build:plugin": "tsc -p plugin/tsconfig.json",
+    "prepublishOnly": "npm run typecheck && npm run build"
   },
   "devDependencies": {
     "@types/debug": "^4.1",
