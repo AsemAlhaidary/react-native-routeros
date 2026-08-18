@@ -152,6 +152,15 @@ export class Channel extends EventEmitter {
         }
         this.close();
         break;
+      case '!empty':
+        // RouterOS v7.18+ sends !empty when a command succeeds but matches no
+        // records. Treat it as a successful completion with no data rows
+        // (write() resolves to an empty array) rather than an unknown reply.
+        if (!this.trapped) {
+          this.emit('done', this.data);
+        }
+        this.close();
+        break;
       default:
         // Unknown reply type — emit 'unknown' which triggers RosException
         this.emit('unknown', reply);

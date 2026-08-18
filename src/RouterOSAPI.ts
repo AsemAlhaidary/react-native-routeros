@@ -235,16 +235,17 @@ export class RouterOSAPI extends EventEmitter {
       this.appStateSubscription = null;
     }
 
+    const connector = this.connector!;
     return new Promise((resolve) => {
       this.closing = true;
-      this.connector!.once('close', () => {
-        this.connector!.destroy();
+      connector.once('close', () => {
+        connector.destroy();
         this.connector = null;
         this.closing = false;
         this.connected = false;
         resolve(this);
       });
-      this.connector!.close();
+      connector.close();
     });
   }
 
