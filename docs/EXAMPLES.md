@@ -103,12 +103,12 @@ torch.on('data', (packet) => {
   // Fires for every torch packet
   console.log('Torch packet:', packet);
 });
-listen.on('error', (data) => {
+torch.on('error', (data) => {
   console.error('Stream error:', data.message);
 });
 
 // ... later, when you're done listening:
-await listen.stop();
+await torch.stop();
 ```
 
 ---
@@ -140,15 +140,15 @@ const torch = api.stream('/tool/torch', ['=interface=ether1']);
 torch.on('data', (packet) => console.log('Torch packet:', packet));
 
 // Pause the stream (sends /cancel; the channel stays open for resume)
-await listen.pause();
+await torch.pause();
 
 // ... do something else ...
 
 // Resume on the same channel
-await listen.resume();
+await torch.resume();
 
 // Stop entirely (cannot re-stream a directly-stopped stream)
-await listen.stop();
+await torch.stop();
 ```
 
 ---
@@ -300,6 +300,51 @@ try {
 ```
 
 Common errno keys include `CANTLOGIN` ("Username or password is invalid"), `SOCKTMOUT` ("Timed out after {{seconds}} seconds"), and `STREAMCLOSD` ("Streaming is closed"). The full catalog is documented in [`docs/API.md`](API.md).
+
+---
+
+## 13. User Manager (v6) — create users and activate profiles
+
+The RouterOS v6 User Manager API (`/tool/user-manager/user`) has two quirks you must design around (verified against a real v6 device):
+
+- **Create a user** — `user/add` takes **one user per command**. `=numbers=` is not supported on `user/add` in v6 and traps with `unknown parameter`. The response resolves to `[{ ret: "*19025" }]` — the new user's id lives in the `ret` field and equals the item's `.id`.
+- **Activate + assign a profile** — `user/create-and-activate-profile` targets **existing** users and accepts a comma-separated batch in `=numbers=`, so you can activate many users with a single command. After activation the user row gains an `actual-profile` field.
+
+```typescript
+const names = ['alice', 'bob', 'carol'];
+const customer = 'admin'; // must already exist in User Manager
+const profile = 'profile1'; // must already exist in User Manager
+
+// Create users — one command per user; each write() opens its own tagged
+// channel, so pipeline them and await together.
+const created = await Promise.all(
+  names.map((username) =>
+    api.write('/tool/user-manager/user/add', [
+      `=username=${username}`,
+      '=password=change-me',
+      `=customer=${customer}`,
+    ])
+  )
+);
+// created[i][0].ret === the new user's id (equals the item's `.id`)
+
+// Activate all of them with a profile in a single command.
+await api.write('/tool/user-manager/user/create-and-activate-profile', [
+  `=numbers=${names.join(',')}`,
+  `=customer=${customer}`,
+  `=profile=${profile}`,
+]);
+
+// Verify — filter a print by username (exact match).
+const [row] = await api.write('/tool/user-manager/user/print', [
+  '?username=alice',
+]);
+console.log(row['.id'], row['actual-profile']); // e.g. *19025 'Alpha 4000 YER'
+```
+
+> For bulk loading (thousands of users), create them in chunks with `Promise.all` (a few hundred `add` commands per chunk keeps memory bounded) and then activate the whole set with a handful of `create-and-activate-profile` commands, since activation accepts a large `=numbers=` batch.
+
+Full runnable example: [`examples/routeros-v6-usermanager.ts`](../examples/routeros-v6-usermanager.ts)
 
 ---
 

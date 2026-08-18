@@ -384,7 +384,7 @@ export class RouterOSAPI extends EventEmitter {
    * @param params       Command path (string) or full params array
    * @param moreParams   Additional parameters (spread)
    * @returns            Promise resolving with parsed response data on !done,
-   *                     rejecting with RosException on !trap
+   *                     rejecting with a plain Error (trap message) on !trap
    */
   write(
     params: string | string[],

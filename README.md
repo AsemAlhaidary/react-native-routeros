@@ -173,11 +173,11 @@ api.stream('/tool/torch', ['=interface=ether1'], (err, packet, stream) => {
 The returned `RStream` supports `pause()`, `resume()`, and `stop()`:
 
 ```typescript
-await listen.pause();
+await torch.pause();
 // ... later ...
-await listen.resume();
+await torch.resume();
 // ... when finished ...
-await listen.stop();
+await torch.stop();
 ```
 
 ### keepalive
@@ -262,3 +262,4 @@ Deeper guides and examples:
 - [API reference](docs/API.md) — complete reference for every public export (types, `RouterOSAPI`, `RStream`, lower-level classes, errors, codec/utils, transport)
 - [Examples](docs/EXAMPLES.md) — real-world scenario recipes (connect + errors, read/write commands, monitoring + torch streams, pause/resume/stop, concurrent commands, keepalive, reconnection, TLS)
 - [basic-usage.ts](examples/basic-usage.ts) — canonical end-to-end `connect → login → write → close` example
+- [routeros-v6-usermanager.ts](examples/routeros-v6-usermanager.ts) — create RouterOS v6 user-manager users and activate them with a profile (bulk create + batch activation)
