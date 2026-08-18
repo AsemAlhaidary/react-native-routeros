@@ -4,11 +4,11 @@ milestone: v1.6.8
 milestone_name: milestone
 current_phase: 07
 current_phase_name: test-package-on-real-routeros-v6-and-v7-routers
-status: verifying
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-08-17T21:34:55.121Z"
-last_activity: 2026-08-17
-last_activity_desc: Phase 07 execution started
+status: verified
+stopped_at: Phase 07 verified — live v6/v7 suite green (8/8 suites, 46/46 tests)
+last_updated: "2026-08-18T22:55:50.000Z"
+last_activity: 2026-08-18
+last_activity_desc: Phase 07 verification completed (live-router run green + docs committed)
 progress:
   total_phases: 7
   completed_phases: 7
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 
 ## Current Position
 
-Phase: 07 (test-package-on-real-routeros-v6-and-v7-routers) — EXECUTING
+Phase: 07 (test-package-on-real-routeros-v6-and-v7-routers) — VERIFIED
 Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-08-17 — Phase 07 execution started
+Status: Phase complete — verified (8/8 suites, 46/46 tests green against live v6 192.168.187.128:8728 and v7 192.168.187.130:8175)
+Last activity: 2026-08-18 — Phase 07 verification completed
 
 Progress: [██████████] 100%
 
@@ -122,6 +122,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 07-03: v6 link/router are v7-only (no user-profile link table; router is the v7 NAS client) — throwing stubs + version-gated skip
 - [Phase ?]: 07-03: runCrud update asserts persistence + stable .id (passwords write-only on read-back); recipe fieldForName distinguishes USER field only (profiles use name on both)
 - [Phase ?]: 07-03: !empty (Finding 2) + onError numeric-errno (Finding 3) recorded RECORD-ONLY in FINDINGS.md — no src/ patch in this test-scope phase
+- [Phase ?]: 07-03: Receiver.hadMore hardcoded false at mid-word chunk boundaries was the v6/v7 CRUD desync root cause — restored original `hadMore: data.length !== this.dataLength` (FINDINGS.md Finding 5, FIXED); UNREGISTEREDTAG throw → log-and-ignore (Finding 6, FIXED, deviation from original)
+- [Phase ?]: 07-03: live run surfaced RStream.start() duplicate-listener stacking on resume (bound on* handlers + remove-then-add) and RouterOSAPI stream-close removeAllListeners cleanup — both fixed; deliberate src/ patches, justified by real defects (Note E in 07-VERIFICATION.md)
 
 ### Pending Todos
 
@@ -146,6 +148,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T21:34:01.035Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-08-18T22:55:50.000Z
+Stopped at: Phase 07 verified — live v6/v7 suite green, docs + STATE committed
 Resume file: None
