@@ -90,8 +90,8 @@ export class Connector extends EventEmitter {
           });
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
-          // TLS connect callback fires from createTlsSocket factory
-          this.onConnect();
+          // Wait for socket 'connect' event before marking connected
+          this.socket.once('connect', () => this.onConnect());
         } else {
           // Plain TCP connection (port 8728)
           this.socket = createPlainSocket({
@@ -111,8 +111,8 @@ export class Connector extends EventEmitter {
           });
           this.socket.setTimeout(this.timeout * 1000);
           this.socket.setKeepAlive(true);
-          // Plain TCP connect callback fires from createPlainSocket factory
-          this.onConnect();
+          // Wait for socket 'connect' event before marking connected
+          this.socket.once('connect', () => this.onConnect());
         }
       }
     }

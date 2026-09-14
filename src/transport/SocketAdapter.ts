@@ -35,6 +35,13 @@ export function createPlainSocket(options: CreateSocketOptions): RosSocket {
       debug('Plain TCP connected to %s:%d', options.host, options.port);
     }
   );
+  // ponytail: react-native-tcp-socket Socket extends EventEmitter,
+  // not stream.Duplex — no `writable` property. The Transmitter pools
+  // all writes when writable is falsy. Patch it on connect so login
+  // data flows directly to the socket instead of sitting in the pool.
+  socket.once('connect', () => {
+    (socket as any).writable = true;
+  });
   return socket;
 }
 
