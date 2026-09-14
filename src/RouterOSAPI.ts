@@ -6,7 +6,7 @@ import { Channel } from './Channel';
 import { RStream } from './RStream';
 import { RosException } from './RosException';
 import { md5Hash } from './md5';
-import { IRosOptions } from './types';
+import { IRosOptions, WriteOptions, WriteResult } from './types';
 
 const debugInfo = createDebug('routeros-api:api:info');
 const debugError = createDebug('routeros-api:api:error');
@@ -28,9 +28,18 @@ export class RouterOSAPI extends EventEmitter {
   private tls?: IRosOptions['tls'];
   private keepalive!: boolean;
 
-  private connected = false;
-  private connecting = false;
+  private _connected = false;
+  private _connecting = false;
   private closing = false;
+
+  /** In-flight graceful-close promise — dedupes concurrent close() calls (F4). */
+  private closePromise: Promise<this> | null = null;
+
+  /** True when close() aborted a connect() that was still in flight. */
+  private abortedByClose = false;
+
+  /** Pending connect() reject function — lets close() settle a mid-handshake connect. */
+  private pendingConnectReject: ((e: Error) => void) | null = null;
 
   private channelsOpen = 0;
   private holdingConnectionWithKeepalive = false;
@@ -53,6 +62,19 @@ export class RouterOSAPI extends EventEmitter {
   constructor(options: IRosOptions) {
     super();
     this.setOptions(options);
+  }
+
+  /**
+   * Socket-level connection truth: false while connecting, true after login,
+   * false after close() and after an unexpected drop.
+   */
+  get connected(): boolean {
+    return this._connected;
+  }
+
+  /** True while a connect() is in flight (including the login handshake). */
+  get connecting(): boolean {
+    return this._connecting;
   }
 
   /**
@@ -82,16 +104,18 @@ export class RouterOSAPI extends EventEmitter {
    * @returns Promise resolving to this RouterOSAPI instance
    */
   connect(): Promise<this> {
-    if (this.connecting) {
+    if (this._connecting) {
       return Promise.reject(new RosException('ALRDYCONNECTING'));
     }
-    if (this.connected) {
+    if (this._connected) {
       return Promise.resolve(this);
     }
 
     debugInfo('Connecting on %s', this.host);
-    this.connecting = true;
-    this.connected = false;
+    this._connecting = true;
+    this._connected = false;
+    this.closePromise = null;
+    this.abortedByClose = false;
 
     this.connector = new Connector({
       host: this.host,
@@ -101,17 +125,28 @@ export class RouterOSAPI extends EventEmitter {
     });
 
     return new Promise((resolve, reject) => {
-      // Pre-login error listener — fires on connect failure, timeout, close
+      // Pre-login error listener — fires on connect failure, timeout, close.
+      // The connect() promise must NEVER stay pending: endListener always
+      // settles, mapping a pre-login close to CANCELLED (aborted by caller's
+      // close()) or CLOSED (router/socket closed before login completed).
       const endListener = (e?: Error) => {
         this.stopAllStreams();
-        this.connected = false;
-        this.connecting = false;
-        if (e) reject(e);
+        this._connected = false;
+        this._connecting = false;
+        const rejectConnect = this.pendingConnectReject;
+        this.pendingConnectReject = null;
+        if (rejectConnect) {
+          rejectConnect(
+            e ? e : new RosException(this.abortedByClose ? 'CANCELLED' : 'CLOSED')
+          );
+        }
       };
       const preLoginClose = () => {
         this.emit('close');
         endListener();
       };
+
+      this.pendingConnectReject = (e: Error) => reject(e);
 
       this.connector!.once('error', endListener);
       this.connector!.once('timeout', endListener);
@@ -120,8 +155,9 @@ export class RouterOSAPI extends EventEmitter {
       this.connector!.once('connected', () => {
         this.login()
           .then(() => {
-            this.connecting = false;
-            this.connected = true;
+            this._connecting = false;
+            this._connected = true;
+            this.pendingConnectReject = null;
 
             // Register AppState listener for RN lifecycle awareness (LIFE-01)
             if (!this.appStateSubscription) {
@@ -131,8 +167,8 @@ export class RouterOSAPI extends EventEmitter {
                   // On any state change, verify internal consistency.
                   // If connected flag is true but connector was destroyed
                   // (task-1 listener missed due to JS suspension), clean up.
-                  if (this.connected && !this.connector) {
-                    this.connected = false;
+                  if (this._connected && !this.connector) {
+                    this._connected = false;
                     this.emit('close');
                   }
                 }
@@ -148,18 +184,13 @@ export class RouterOSAPI extends EventEmitter {
             // 'close' fires for: !fatal, socket close, destroy — each exactly once
             // because Connector.destroy() → removeAllListeners().
             this.connector!.once('close', (reason?: 'fatal') => {
-              this.connected = false;
-              this.connecting = false;
-              // Stop streams + clear timers (mirrors close() cleanup)
+              this._connected = false;
+              this._connecting = false;
+              // Stop streams + clear timers + drop AppState listener
+              // (mirrors close() cleanup — LIFE-01/F6: no leaked listener).
               this.stopAllStreams();
-              if (this.keptaliveby) {
-                clearTimeout(this.keptaliveby);
-                this.keptaliveby = null;
-              }
-              if (this.connectionHoldInterval) {
-                clearTimeout(this.connectionHoldInterval);
-                this.connectionHoldInterval = null;
-              }
+              this.clearConnectionTimers();
+              this.removeAppStateListener();
               // Release connector reference
               this.connector = null;
 
@@ -174,13 +205,13 @@ export class RouterOSAPI extends EventEmitter {
             // Post-login error — persistent (on, not once: multiple errors
             // can fire on a dying socket before destroy)
             this.connector!.on('error', (e: Error) => {
-              this.connected = false;
-              this.connecting = false;
+              this._connected = false;
+              this._connecting = false;
               this.emit('error', e);
             });
             this.connector!.once('timeout', (e: Error) => {
-              this.connected = false;
-              this.connecting = false;
+              this._connected = false;
+              this._connecting = false;
               this.emit('error', e);
             });
 
@@ -193,8 +224,9 @@ export class RouterOSAPI extends EventEmitter {
             resolve(this);
           })
           .catch((e: Error) => {
-            this.connecting = false;
-            this.connected = false;
+            this._connecting = false;
+            this._connected = false;
+            this.pendingConnectReject = null;
             reject(e);
           });
       });
@@ -208,17 +240,62 @@ export class RouterOSAPI extends EventEmitter {
    * Close the connection gracefully.
    * Can be re-opened via setOptions() then connect() (CONN-05).
    *
+   * Idempotent (F4): concurrent/second closes reuse the in-flight close
+   * promise — never rejects `ALRDYCLOSNG`. Closing while connect() is in
+   * flight aborts the handshake and settles connect() with `CANCELLED`.
+   *
    * @returns Promise resolving when connection is fully closed
    */
   close(): Promise<this> {
-    if (this.closing) {
-      return Promise.reject(new RosException('ALRDYCLOSNG'));
+    if (this.closePromise) {
+      return this.closePromise;
     }
-    if (!this.connected) {
+
+    // Abort an in-flight connect() (user cancelled mid-handshake).
+    if (this._connecting) {
+      this.abortedByClose = true;
+      this.clearConnectionTimers();
+      this.removeAppStateListener();
+      this.stopAllStreams();
+      const connector = this.connector;
+      this.connector = null;
+      if (connector) connector.destroy();
+      const rejectConnect = this.pendingConnectReject;
+      this.pendingConnectReject = null;
+      if (rejectConnect) {
+        rejectConnect(new RosException('CANCELLED'));
+      }
+      this._connecting = false;
+      this._connected = false;
       return Promise.resolve(this);
     }
 
-    // Clear hold + keepalive timers
+    if (!this._connected) {
+      return Promise.resolve(this);
+    }
+
+    this.clearConnectionTimers();
+    this.stopAllStreams();
+    this.removeAppStateListener();
+
+    const connector = this.connector!;
+    this.closePromise = new Promise((resolve) => {
+      this.closing = true;
+      connector.once('close', () => {
+        connector.destroy();
+        this.connector = null;
+        this.closing = false;
+        this._connected = false;
+        this.closePromise = null;
+        resolve(this);
+      });
+      connector.close();
+    });
+    return this.closePromise;
+  }
+
+  /** Clear the connection-hold and keepalive timers (shared by close/drop). */
+  private clearConnectionTimers(): void {
     if (this.connectionHoldInterval) {
       clearTimeout(this.connectionHoldInterval);
       this.connectionHoldInterval = null;
@@ -227,35 +304,31 @@ export class RouterOSAPI extends EventEmitter {
       clearTimeout(this.keptaliveby);
       this.keptaliveby = null;
     }
-    this.stopAllStreams();
+  }
 
-    // Remove AppState lifecycle listener (LIFE-01)
+  /** Remove the AppState lifecycle listener (LIFE-01/F6 — no leaked listener). */
+  private removeAppStateListener(): void {
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
     }
-
-    const connector = this.connector!;
-    return new Promise((resolve) => {
-      this.closing = true;
-      connector.once('close', () => {
-        connector.destroy();
-        this.connector = null;
-        this.closing = false;
-        this.connected = false;
-        resolve(this);
-      });
-      connector.close();
-    });
   }
 
   /**
    * Open a new tagged channel for a command.
-   * Used internally by write() (Phase 3).
+   * Used internally by write() / writeCommand() / writeStream() / stream().
+   *
+   * F7: single choke point — throws a typed `NOTCONNECTED` instead of the
+   * untyped `TypeError` that `new Channel(this.connector!)` produced after a
+   * drop (connector is null). write()/writeCommand() catch this and return a
+   * rejected promise; stream paths throw synchronously.
    */
   openChannel(): Channel {
+    if (!this.connector || this.closing) {
+      throw new RosException('NOTCONNECTED');
+    }
     this.increaseChannelsOpen();
-    return new Channel(this.connector!);
+    return new Channel(this.connector);
   }
 
   // ──── Private methods ────
@@ -276,7 +349,7 @@ export class RouterOSAPI extends EventEmitter {
    * The challenge buffer is: 0x00 + password (Latin-1 bytes) + challenge (hex-decoded to 16 bytes).
    */
   private login(): Promise<this> {
-    this.connecting = true;
+    this._connecting = true;
     debugInfo('Sending 6.43+ login to %s', this.host);
 
     // Step 1: Send initial login with plain password
@@ -391,7 +464,13 @@ export class RouterOSAPI extends EventEmitter {
     ...moreParams: (string | string[])[]
   ): Promise<Record<string, any>[]> {
     params = this.concatParams(params, moreParams);
-    let chann: Channel | null = this.openChannel();
+    let chann: Channel | null;
+    try {
+      chann = this.openChannel();
+    } catch (e) {
+      // F7 — never throw synchronously; reject with a typed error instead.
+      return Promise.reject(e);
+    }
     this.holdConnection();
 
     chann.once('close', () => {
@@ -401,6 +480,40 @@ export class RouterOSAPI extends EventEmitter {
     });
 
     return chann.write(params) as Promise<Record<string, any>[]>;
+  }
+
+  /**
+   * Write a command and resolve with records + `ret` + `tag`.
+   *
+   * This is the primary API for Wasl+; `write()` stays for node-routeros
+   * parity. Builds words `[path, ...params]` (flat; empty strings like
+   * `=comment=` preserved; no `.tag=`, no terminator — Channel appends both).
+   */
+  writeCommand(
+    path: string,
+    params: string[] = [],
+    opts: WriteOptions = {}
+  ): Promise<WriteResult> {
+    let chann: Channel;
+    try {
+      chann = this.openChannel();
+    } catch (e) {
+      return Promise.reject(e);
+    }
+    this.holdConnection();
+
+    chann.once('close', () => {
+      this.decreaseChannelsOpen();
+      this.releaseConnectionHold();
+    });
+
+    return chann
+      .writeWithMeta([path, ...params], opts)
+      .then((r) => ({
+        records: r.records as Record<string, string>[],
+        ret: r.ret,
+        tag: chann.Id,
+      }));
   }
 
   /**
@@ -540,7 +653,7 @@ export class RouterOSAPI extends EventEmitter {
    */
   private holdConnection(): void {
     if (this.channelsOpen !== 1) return;
-    if (this.connected && !this.holdingConnectionWithKeepalive) {
+    if (this._connected && !this.holdingConnectionWithKeepalive) {
       if (this.connectionHoldInterval) {
         clearTimeout(this.connectionHoldInterval);
       }

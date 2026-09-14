@@ -11,7 +11,7 @@
  * If User Manager is unavailable (`enable` !traps) or the device is
  * unreachable, the device describe skips (exit 0).
  */
-import { RouterOSAPI } from '../../src/index';
+import { RouterOSAPI, RosTrapException } from '../../src/index';
 import {
   buildClient,
   reachable,
@@ -142,6 +142,50 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         fieldForName: recipe!.fieldForName, // v6 `username` / v7 `name`
         prefix,
       });
+    }, 120000);
+
+    test('writeCommand: add returns created .id (ret); re-delete traps with category', async () => {
+      if (!available || !userManagerAvailable) return;
+      expect(recipe).not.toBeNull();
+      const um = recipe!.userManager;
+      const name = makeName(prefix);
+
+      // CREATE via writeCommand — `ret` carries the created object `.id`.
+      const addWords = um.userAdd(name, 'gsd-itest-pw');
+      const created = await api!.writeCommand(addWords[0], addWords.slice(1));
+      expect(Array.isArray(created.records)).toBe(true);
+
+      let id: string | undefined = created.ret;
+      if (!id) {
+        // Some builds may not surface =ret=; read back for the authoritative id.
+        const rows = await api!.write(um.userRead());
+        id = rows.find(
+          (r) => (r[recipe!.fieldForName] ?? r.name ?? r.username) === name
+        )?.['.id'];
+      }
+      expect(typeof id).toBe('string');
+      expect((id as string).length).toBeGreaterThan(0);
+
+      // DELETE succeeds; a successful remove carries no `ret`.
+      const delWords = um.userDel(id as string);
+      const deleted = await api!.writeCommand(delWords[0], delWords.slice(1));
+      expect(deleted.ret === undefined || deleted.ret === '').toBe(true);
+
+      // Re-delete the same `.id` traps — attributes are preserved verbatim.
+      let trap: any;
+      try {
+        const again = um.userDel(id as string);
+        await api!.writeCommand(again[0], again.slice(1));
+      } catch (e) {
+        trap = e;
+      }
+      expect(trap).toBeInstanceOf(RosTrapException);
+      expect(trap.trapAttributes).toBeDefined();
+      // eslint-disable-next-line no-console
+      console.log(
+        `re-delete trap attributes: ${JSON.stringify(trap.trapAttributes)}`
+      );
+      expect(Object.keys(trap.trapAttributes).length).toBeGreaterThan(0);
     }, 120000);
 
     test('link: user-profile add → read → remove (v7 only)', async () => {

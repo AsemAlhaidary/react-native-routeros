@@ -69,7 +69,14 @@ Do not attempt to run this library inside Expo Go — the connection will fail b
 Import the public API from `react-native-routeros`:
 
 ```typescript
-import { RouterOSAPI, RStream, RosException } from 'react-native-routeros';
+import {
+  RouterOSAPI,
+  RStream,
+  RosException,
+  RosTrapException,
+  RosCommand,
+  RosErrno,
+} from 'react-native-routeros';
 ```
 
 ### Connect and login
@@ -123,6 +130,60 @@ You can also pass command parameters as an array:
 
 ```typescript
 const ether = await api.write('/interface/print', ['=type=ether']);
+```
+
+### writeCommand
+
+`writeCommand()` is the higher-level command API. It resolves to a `WriteResult`
+(`{ records, ret?, tag }`) instead of a bare array — `ret` is the `!done =ret=`
+value (the created object's `.id` on add flows), which `write()` intentionally
+drops for node-routeros parity. It also supports a per-command timeout and
+abort:
+
+```typescript
+const { records, ret, tag } = await api.writeCommand(
+  '/ip/hotspot/user/add',
+  ['=name=wasl', '=password=secret'],
+  { timeoutMs: 5000 }
+);
+console.log('created .id:', ret);
+
+// Abort via AbortSignal
+const controller = new AbortController();
+const p = api.writeCommand('/ip/hotspot/user/print', [], {
+  signal: controller.signal,
+});
+controller.abort();
+```
+
+A `!trap` rejects with `RosTrapException`, whose `trapAttributes` carry the
+router's structured trap fields verbatim (`category`, `message`, `place`,
+`detail`) — so idempotent deletes can treat `category === 0` as "already gone":
+
+```typescript
+try {
+  await api.writeCommand('/user/remove', ['=.id=*1']);
+} catch (err) {
+  if (err instanceof RosTrapException && err.trapAttributes.category === '0') {
+    // already deleted — success
+  }
+}
+```
+
+### RosCommand (word builder)
+
+`RosCommand` builds the command word array from friendly options — camelCase
+keys become kebab-case, booleans become `yes`/`no`, `undefined` values are
+skipped, and `''` values are skipped unless `preserveEmptyValues` is set. It
+never emits `.tag=` (the channel owns that) and never appends the terminator.
+
+```typescript
+const cmd = new RosCommand('/ip/hotspot/user/add', {
+  attributes: { limitUptime: '1h', disabled: true },
+  preserveEmptyValues: true,
+  queries: [{ field: 'name', operator: '=', value: 'wasl' }],
+});
+await api.writeCommand(cmd.path, cmd.toWords().slice(1));
 ```
 
 ### writeStream
@@ -203,6 +264,11 @@ const api = new RouterOSAPI({
 
 `close()` gracefully closes the connection. The instance can be reconnected afterward via `setOptions()` then `connect()`.
 
+`close()` is **idempotent** — concurrent or repeated calls share the in-flight
+close and never reject with `ALRDYCLOSNG`. Calling `close()` while `connect()`
+is still in flight aborts the handshake: `connect()` rejects with
+`RosException('CANCELLED')` and always settles (it never hangs).
+
 ```typescript
 await api.close();
 
@@ -215,9 +281,27 @@ api.setOptions({
 await api.connect();
 ```
 
+### Connection state
+
+`api.connected` and `api.connecting` expose socket-level truth on every
+lifecycle path — false before `connect()`, true after login, false after
+`close()` and after an unexpected drop:
+
+```typescript
+if (api.connected) {
+  await api.writeCommand('/system/identity/print');
+}
+```
+
 ### Lifecycle events
 
 `RouterOSAPI` extends `EventEmitter` and emits lifecycle events for reconnection awareness:
+
+| Event | Payload | Fired when |
+|-------|---------|------------|
+| `close` | — | Connection closed (consumer-facing; enables reconnection). Also fired when `close()` aborts an in-flight `connect()` |
+| `error` | `Error` | Connection-level error (socket error, timeout) |
+| `fatal` | — | Protocol-level `!fatal` from the router — connection terminated |
 
 ```typescript
 api.on('close', () => {
@@ -230,6 +314,10 @@ api.on('fatal', () => {
   console.error('Protocol fatal error — connection terminated');
 });
 ```
+
+Writes after the connection is closed/dropped reject with
+`RosException('NOTCONNECTED')` (via `RosErrno.NOTCONNECTED`) — never an untyped
+`TypeError` and never a pending promise.
 
 ### TLS
 

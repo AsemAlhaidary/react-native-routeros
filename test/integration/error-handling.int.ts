@@ -11,7 +11,7 @@
  *   4. The v7 `!empty` reply (RouterOS 7.18+) is detected and recorded as a
  *      known-gap finding — never allowed to fail the suite.
  */
-import { RouterOSAPI, RosException } from '../../src/index';
+import { RouterOSAPI, RosException, RosTrapException } from '../../src/index';
 import {
   buildClient,
   reachable,
@@ -121,7 +121,7 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
       }
     });
 
-    test('invalid command rejects with a plain Error carrying the !trap message', async () => {
+    test('invalid command rejects with a RosTrapException carrying the !trap message + attributes', async () => {
       if (!available) return;
       expect(api).not.toBeNull();
       let err: any;
@@ -131,9 +131,13 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
         err = e;
       }
       expect(err).toBeInstanceOf(Error);
-      expect(err).not.toBeInstanceOf(RosException);
+      expect(err).toBeInstanceOf(RosException);
+      expect(err).toBeInstanceOf(RosTrapException);
+      expect(err.errno).toBe('TRAP');
       expect(typeof err.message).toBe('string');
       expect(err.message.length).toBeGreaterThan(0);
+      expect(err.trapAttributes).toBeDefined();
+      expect(err.trapAttributes.message).toBeDefined();
     }, 30000);
 
     test('v7 !empty reply is detected and recorded as a known gap (never fatal)', async () => {

@@ -110,6 +110,26 @@ function deviceSuite(label: string, cfg: DeviceConfig): void {
       expect(instance).toBe(api);
     });
 
+    test('double close() is safe (idempotent) and the instance stays reconnectable', async () => {
+      if (!available) return;
+      expect(api).not.toBeNull();
+      if (!api!.connected) {
+        await api!.connect();
+      }
+      await Promise.all([api!.close(), api!.close()]);
+      expect(api!.connected).toBe(false);
+      // Leave the suite connected for the remaining tests.
+      api!.setOptions({
+        host: cfg.host,
+        port: cfg.port,
+        user: process.env.ROUTEROS_USER,
+        password: process.env.ROUTEROS_PASSWORD,
+        timeout: 10,
+      });
+      await api!.connect();
+      expect(api!.connected).toBe(true);
+    }, 30000);
+
     test('wrong password rejects with CANTLOGIN (AUTH-03)', async () => {
       if (!available) return;
       const bad = new RouterOSAPI({
