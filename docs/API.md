@@ -19,6 +19,9 @@ Everything exported from the package root (`src/index.ts`):
 | `Transmitter` | class | `Transmitter.ts` |
 | `Receiver` | class | `Receiver.ts` |
 | `RosException` | class | `RosException.ts` |
+| `RosTrapException` | class | `RosTrapException.ts` |
+| `RosErrno` | const (object) | `RosErrno.ts` |
+| `RosCommand` | class | `RosCommand.ts` |
 | `messages` | object (default export) | `messages.ts` |
 | `decodeWin1252` | function | `win1252.ts` |
 | `encodeWin1252` | function | `win1252.ts` |
@@ -29,6 +32,10 @@ Everything exported from the package root (`src/index.ts`):
 | `IRosOptions` | interface (type) | `types.ts` |
 | `TlsRnOptions` | interface (type) | `types.ts` |
 | `IRosGenericResponse` | interface (type) | `types.ts` |
+| `WriteResult` | interface (type) | `types.ts` |
+| `WriteOptions` | interface (type) | `types.ts` |
+| `RosCommandOptions` | interface (type) | `types.ts` |
+| `RosQueryWord` | interface (type) | `types.ts` |
 | `ConnectorOptions` | interface (type) | `Connector.ts` |
 | `RosSocket` | type | `transport/SocketAdapter.ts` |
 | `CreateSocketOptions` | interface (type) | `transport/SocketAdapter.ts` |
@@ -73,6 +80,48 @@ interface IRosGenericResponse {
 }
 ```
 
+### `WriteResult`
+
+Result of `writeCommand()`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `records` | `Record<string, string>[]` | Resolved rows (node-routeros parity — includes the `=ret=` row on add flows) |
+| `ret` | `string \| undefined` | The `!done =ret=` value — the created object's `.id` on add flows; absent on prints and when trapped |
+| `tag` | `string` | Channel tag for correlation/debugging |
+
+### `WriteOptions`
+
+Per-command options for `writeCommand()` / `Channel.writeWithMeta()`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `timeoutMs` | `number \| undefined` | Reject with `RosException('TIMEOUT')` if the router never answers; cleans up the receiver tag (leak-free) |
+| `signal` | `AbortSignal \| undefined` | On abort, reject with `RosException('CANCELLED')` and fire-and-forget `/cancel` for the channel |
+
+### `RosCommandOptions`
+
+Options for `RosCommand`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `attributes` | `Record<string, string \| number \| boolean \| undefined>` | camelCase keys converted to kebab-case; `boolean` → `yes`/`no`; `undefined` skipped; `''` skipped unless `preserveEmptyValues` |
+| `queries` | `RosQueryWord[]` | Query words (`?field=value`, `?field<value`, `?field>value`, `?field`, `?-field`) |
+| `proplist` | `string[]` | Emits `=.proplist=a,b` |
+| `label` | `string` | App correlation only — never lands on the wire |
+| `timeoutMs` | `number` | Reserved for `writeCommand` |
+| `preserveEmptyValues` | `boolean` | Keep `''` attribute values on the wire instead of skipping them |
+
+### `RosQueryWord`
+
+One query condition.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `field` | `string` | RouterOS field name |
+| `operator` | `'=' \| '<' \| '>' \| '?' \| '-'` | `=`/`<`/`>` compare; `?` presence (`?field`); `-` absence (`?-field`) |
+| `value` | `string \| undefined` | Comparison value (ignored for `?`/`-`) |
+
 ### `ConnectorOptions`
 
 Options for the lower-level `Connector` class.
@@ -116,13 +165,21 @@ new RouterOSAPI(options: IRosOptions)
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `setOptions` | `(options: IRosOptions): void` | Set/replace connection options; can be called before `connect()` or before reconnecting |
-| `connect` | `(): Promise<this>` | Open the TCP/TLS connection and **log in automatically** (MD5 challenge-response, RouterOS v6/v7). Resolves to the instance on success, rejects with a `RosException` on failure. There is no separate public login method — `connect()` is the login call |
-| `close` | `(): Promise<this>` | Gracefully close the connection. The instance can be reconnected via `setOptions()` then `connect()` |
-| `write` | `(params: string \| string[], ...moreParams: (string \| string[])[]): Promise<Record<string, any>[]>` | Send a one-shot command on a new tagged channel; resolves with the array of parsed response objects on `!done`, rejects on `!trap` |
+| `connect` | `(): Promise<this>` | Open the TCP/TLS connection and **log in automatically** (MD5 challenge-response, RouterOS v6/v7). Resolves to the instance on success, rejects with a `RosException` on failure. **Never leaves the promise pending** — a pre-login close settles `CANCELLED` (aborted by `close()`) or `CLOSED` (socket closed before login) |
+| `close` | `(): Promise<this>` | Gracefully close the connection. **Idempotent** — repeated/concurrent calls share the in-flight close and never reject `ALRDYCLOSNG`. Closing mid-`connect()` aborts the handshake (`connect()` rejects `CANCELLED`). The instance can be reconnected via `setOptions()` then `connect()` |
+| `write` | `(params: string \| string[], ...moreParams: (string \| string[])[]): Promise<Record<string, any>[]>` | Send a one-shot command on a new tagged channel; resolves with the array of parsed response objects on `!done`, rejects on `!trap`. After close/drop, rejects `RosException('NOTCONNECTED')` instead of throwing a `TypeError` |
+| `writeCommand` | `(path: string, params?: string[], opts?: WriteOptions): Promise<WriteResult>` | Write a command and resolve `{ records, ret, tag }`; `ret` carries the `!done =ret=` value (created object `.id`). Primary API for app use; `write()` stays for node-routeros parity. Rejects `RosTrapException` on `!trap`, `RosException('TIMEOUT')` on `timeoutMs` expiry, `RosException('CANCELLED')` on abort, `RosException('NOTCONNECTED')` after close/drop |
 | `writeStream` | `(params: string \| string[], ...moreParams: (string \| string[])[]): RStream` | Send a command and return an `RStream` emitting `data`/`done`/`trap`/`close` |
 | `stream` | `(params: string \| string[] = [], ...moreParams: (string \| string[] \| callback)[]): RStream` | Return an `RStream` for continuous endpoints (e.g. `/tool/torch`); accepts an optional `(err, packet, stream)` callback as the last argument; empty-data debouncing is enabled |
 | `keepaliveBy` | `(params: string \| string[] = '#', ...moreParams: (string \| string[] \| callback)[]): void` | Run a command at a fixed interval (every `timeout / 2` seconds) to keep the session alive |
-| `openChannel` | `(): Channel` | Open a new tagged `Channel` (used internally by `write`) |
+| `openChannel` | `(): Channel` | Open a new tagged `Channel` (used internally by `write`); throws `RosException('NOTCONNECTED')` when no connection is live |
+
+### Connection state accessors
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `connected` | `get: boolean` | Socket-level truth: false while connecting, true after login, false after `close()` and after an unexpected drop |
+| `connecting` | `get: boolean` | True while a `connect()` is in flight (including the login handshake) |
 
 ### Events
 
@@ -130,7 +187,7 @@ The instance emits these lifecycle events (inherited from `EventEmitter`):
 
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `close` | — | Connection closed (consumer-facing; enables reconnection logic) |
+| `close` | — | Connection closed (consumer-facing; enables reconnection logic). Fired for graceful close, unexpected drop, and when `close()` aborts an in-flight `connect()` |
 | `error` | `Error` | Connection-level error |
 | `fatal` | — | Protocol-level `!fatal` from the router — connection terminated |
 
@@ -188,7 +245,10 @@ These are exported for advanced use and are what `RouterOSAPI` builds on interna
 | `Id` (getter) | `get Id(): string` | The channel's unique tag ID |
 | `Connector` (getter) | `get Connector(): Connector` | The parent connector |
 | `write` | `(params: string[], isStream?: boolean, returnPromise?: boolean): Promise<Record<string, any>[]> \| void` | Write a command over this channel (appends `.tag=<id>`); resolves on `!done`, rejects on `!trap` |
+| `writeWithMeta` | `(params: string[], opts?: ChannelWriteOptions): Promise<{ records: Record<string, any>[]; ret?: string }>` | Like `write()` but resolves `ret` (the `!done =ret=` value) and supports `timeoutMs`/`signal`. On `TIMEOUT`/abort the receiver tag is removed (leak-free) |
 | `close` | `(force?: boolean): void` | Close the channel and remove its tag reader from the connector |
+
+`ChannelWriteOptions = { isStream?: boolean; timeoutMs?: number; signal?: AbortSignal }`.
 
 ### `Connector`
 
@@ -248,6 +308,37 @@ constructor(errno: string, extras?: Record<string, string>)
 
 The `extras` map replaces `{{key}}` placeholders in the catalog message.
 
+### `RosTrapException`
+
+`class RosTrapException extends RosException` — raised when a command rejects with a RouterOS `!trap`. Passes `instanceof Error`, `instanceof RosException`, and `instanceof RosTrapException`.
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `errno` | `'TRAP'` | Always `'TRAP'` |
+| `trapAttributes` | `Record<string, string>` (readonly) | Verbatim trap fields: `category`, `message`, `place`, `detail` |
+| `message` | `string` | The trap's `message` (or `'RouterOS trap'` when absent) |
+
+```typescript
+constructor(trapAttributes: Record<string, string>)
+```
+
+`category === '0'` means "no such item" — useful for idempotent deletes.
+
+### `RosCommand`
+
+`class RosCommand` — word builder (app-friendly replacement for hand-rolled `CommandContext`).
+
+| Member | Signature | Description |
+|--------|-----------|-------------|
+| constructor | `(path: string, options?: RosCommandOptions)` | Create a command for a RouterOS path |
+| `path` | `readonly string` | The RouterOS command path |
+| `label` | `readonly string` | App correlation only — never lands on the wire |
+| `toWords` | `(): string[]` | `[path, ...=kebab=value, =.proplist=, ?query]` — never `.tag=`, never a trailing `''` terminator |
+
+### `RosErrno`
+
+`RosErrno` (const object) — exported errno constants so consumers stop hardcoding magic strings: `TRAP`, `TIMEOUT`, `CANCELLED`, `CLOSED`, `NOTCONNECTED`, `CANTLOGIN`, `SOCKTMOUT`, `UNKNOWNREPLY`, `UNREGISTEREDTAG`, `STREAMCLOSD`, `ALRDYSTREAMING`, `CANTWRTWHLSTRMG`, `ALRDYCLOSNG`, `ALRDYCONNECTING`, `REFNOTFND`.
+
 ### `messages`
 
 `messages` (default export) — a `Record<string, string>` mapping errno keys to human-readable messages. Notable keys:
@@ -256,6 +347,11 @@ The `extras` map replaces `{{key}}` placeholders in the catalog message.
 |-----|---------|
 | `CANTLOGIN` | Username or password is invalid |
 | `SOCKTMOUT` | Timed out after {{seconds}} seconds |
+| `TRAP` | {{message}} |
+| `TIMEOUT` | Command timed out after {{milliseconds}}ms |
+| `CANCELLED` | Connection closed by caller |
+| `CLOSED` | Connection closed before login completed |
+| `NOTCONNECTED` | RouterOS connection is not established |
 | `STREAMCLOSD` | Streaming is closed |
 | `ALRDYSTREAMING` | Already streaming |
 | `CANTWRTWHLSTRMG` | Cannot write over the same channel that is streaming |
@@ -308,3 +404,9 @@ PEM files are provided as strings (e.g. `require('./cert.pem')` for Metro-bundle
 - **Plain TCP is cleartext.** The API defaults to plain TCP on port 8728. For access outside a trusted local network, use TLS on port 8729.
 - **Pin the self-signed CA.** RouterOS ships a self-signed certificate by default. To trust it, pass the CA PEM content via `tls: { ca }` (`TlsRnOptions.ca`).
 - **Never hardcode credentials.** Use environment variables or a secure key store for `user` / `password`.
+
+## Behavior contract
+
+- **Promises always settle.** `connect()`, `write()`, `writeCommand()`, and `close()` never leave a pending promise. Invalid states produce a typed `RosException` (e.g. `NOTCONNECTED` after close, `CANCELLED`/`CLOSED` on a pre-login close, `TIMEOUT` on an unanswered command) — never an untyped `TypeError`.
+- **`close()` is idempotent.** Concurrent/repeated calls never reject `ALRDYCLOSNG`; the instance remains reconnectable via `setOptions()` + `connect()`.
+- **No listener leaks.** The AppState subscription is removed on both graceful `close()` and unexpected drops.

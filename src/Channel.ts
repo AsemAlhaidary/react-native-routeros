@@ -1,10 +1,21 @@
 import { EventEmitter } from 'events';
 import createDebug from 'debug';
 import { RosException } from './RosException';
+import { RosTrapException } from './RosTrapException';
 import { Connector } from './Connector';
 
 const debugInfo = createDebug('routeros-api:channel:info');
 const debugError = createDebug('routeros-api:channel:error');
+
+/** Options for `Channel.writeWithMeta()`. */
+export interface ChannelWriteOptions {
+  /** Streaming mode (fire-and-forget semantics for RStream). */
+  isStream?: boolean;
+  /** Reject with `TIMEOUT` after this many ms and clean up the receiver tag. */
+  timeoutMs?: number;
+  /** On abort, reject with `CANCELLED` and fire-and-forget `/cancel`. */
+  signal?: AbortSignal;
+}
 
 /**
  * Channel class — generates unique IDs for commands and manages
@@ -15,6 +26,9 @@ const debugError = createDebug('routeros-api:channel:error');
 export class Channel extends EventEmitter {
   /** Accumulated !re data sentences received for this channel */
   private data: Record<string, any>[] = [];
+
+  /** The `!done` / `!empty` `=ret=` value (created object `.id`), if any */
+  private ret?: string;
 
   /** Whether a !trap was received (prevents !done from resolving) */
   private trapped = false;
@@ -63,27 +77,86 @@ export class Channel extends EventEmitter {
     isStream: boolean = false,
     returnPromise: boolean | undefined = true
   ): Promise<Record<string, any>[]> | void {
-    this.streaming = isStream;
+    if (!returnPromise) {
+      this.streaming = isStream;
+      params.push('.tag=' + this.id);
+      this.readAndWrite(params);
+      return;
+    }
+    return this.writeWithMeta(params, { isStream }).then((r) => r.records);
+  }
+
+  /**
+   * Write a command and resolve with records + the `!done =ret=` value.
+   * Identical to `write()` but surfaces `ret` (the created object `.id`),
+   * which node-routeros-parity `write()` intentionally drops.
+   *
+   * Also owns the per-command timeout and abort handling, so cleanup is
+   * atomic with the promise settlement (no receiver-tag leak on TIMEOUT).
+   */
+  writeWithMeta(
+    params: string[],
+    opts: ChannelWriteOptions = {}
+  ): Promise<{ records: Record<string, any>[]; ret?: string }> {
+    this.streaming = opts.isStream ?? false;
 
     // Append the channel's tag to the command parameters
     params.push('.tag=' + this.id);
 
-    if (returnPromise) {
-      // Collect !re data sentences as they arrive
-      this.on('data', (packet: Record<string, any>) => this.data.push(packet));
+    // Collect !re data sentences as they arrive
+    this.on('data', (packet: Record<string, any>) => this.data.push(packet));
 
-      return new Promise<Record<string, any>[]>((resolve, reject) => {
-        this.once('done', (data) => resolve(data));
-        this.once('trap', (data) =>
-          reject(new Error(data.message))
-        );
+    return new Promise<{ records: Record<string, any>[]; ret?: string }>(
+      (resolve, reject) => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
+
+        const onAbort = () => {
+          this.sendCancel();
+          cleanup();
+          this.close();
+          reject(new RosException('CANCELLED'));
+        };
+
+        const cleanup = () => {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          if (opts.signal) opts.signal.removeEventListener('abort', onAbort);
+        };
+
+        this.once('done', () => {
+          cleanup();
+          resolve({ records: this.data, ret: this.ret });
+        });
+        this.once('trap', (data) => {
+          cleanup();
+          reject(new RosTrapException(data as Record<string, string>));
+        });
+
+        if (opts.timeoutMs) {
+          timer = setTimeout(() => {
+            cleanup();
+            this.close(); // removes tag + listeners (leak-free)
+            reject(
+              new RosException('TIMEOUT', {
+                milliseconds: String(opts.timeoutMs),
+              })
+            );
+          }, opts.timeoutMs);
+        }
+
+        if (opts.signal) {
+          if (opts.signal.aborted) {
+            onAbort();
+            return;
+          }
+          opts.signal.addEventListener('abort', onAbort);
+        }
+
         this.readAndWrite(params);
-      });
-    }
-
-    // Fire-and-forget (used internally by RStream in Phase 3)
-    this.readAndWrite(params);
-    return;
+      }
+    );
   }
 
   /**
@@ -110,6 +183,19 @@ export class Channel extends EventEmitter {
   }
 
   /**
+   * Fire-and-forget `/cancel` for an aborted command — mirrors the
+   * RStream.stop() pattern. Best effort: the connection may already be gone.
+   */
+  private sendCancel(): void {
+    try {
+      const chann = new Channel(this.connector);
+      chann.write(['/cancel', '=tag=' + this.id], false, false);
+    } catch {
+      // connection already destroyed — nothing to cancel
+    }
+  }
+
+  /**
    * Process a response packet received from RouterOS for this channel.
    *
    * Parses the packet, then routes based on the reply type:
@@ -130,6 +216,12 @@ export class Channel extends EventEmitter {
     if (reply === '!trap') {
       this.trapped = true;
       this.emit('trap', parsed);
+      // Non-streaming channels close on trap: frees the receiver tag and lets
+      // RouterOSAPI release its connection-hold timer. Streaming channels stay
+      // open (RStream pause/resume depends on the 'interrupted' trap).
+      if (!this.streaming) {
+        this.close();
+      }
       return;
     }
 
@@ -148,6 +240,7 @@ export class Channel extends EventEmitter {
       case '!done':
         // If !trap was received earlier, don't emit 'done'
         if (!this.trapped) {
+          this.ret = parsed['ret'];
           this.emit('done', this.data);
         }
         this.close();
@@ -157,6 +250,7 @@ export class Channel extends EventEmitter {
         // records. Treat it as a successful completion with no data rows
         // (write() resolves to an empty array) rather than an unknown reply.
         if (!this.trapped) {
+          this.ret = parsed['ret'];
           this.emit('done', this.data);
         }
         this.close();
