@@ -122,6 +122,7 @@ export class RouterOSAPI extends EventEmitter {
       port: this.port,
       timeout: this.timeout,
       tls: this.tls,
+      keepalive: this.keepalive,
     });
 
     return new Promise((resolve, reject) => {
@@ -312,6 +313,25 @@ export class RouterOSAPI extends EventEmitter {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
     }
+  }
+
+  /**
+   * Truthful connection drop: clear timers/streams, flip the connected state
+   * to false, release the connector, and emit 'close' exactly once. Used when
+   * a keepalive probe fails — the transport is gone, so reporting `connected`
+   * would be a lie (the app relies on this signal to reconnect).
+   */
+  private handleConnectionLost(): void {
+    if (this.closing || (!this._connected && !this.connector)) return; // explicit close or already handled
+    this.clearConnectionTimers();
+    this.stopAllStreams();
+    this.removeAppStateListener();
+    const connector = this.connector;
+    this.connector = null;
+    this._connected = false;
+    this._connecting = false;
+    if (connector) connector.destroy();
+    this.emit('close');
   }
 
   /**
@@ -732,10 +752,16 @@ export class RouterOSAPI extends EventEmitter {
           clearTimeout(this.keptaliveby);
         }
         this.keptaliveby = setTimeout(() => {
-          (this.write(params as string[]) as Promise<Record<string, any>[]>)
-            .then((data) => {
+          // Bound the probe: a half-open socket can leave a bare write() pending
+          // forever (no '!done', no socket error), which would report `connected`
+          // while the router is gone. `timeoutMs` rejects with TIMEOUT → drop.
+          const path = params[0] ?? '#';
+          (this.writeCommand(path, params.slice(1), {
+            timeoutMs: this.timeout * 1000,
+          }) as Promise<{ records: Record<string, any>[] }>)
+            .then((r) => {
               if (typeof callback === 'function') {
-                callback(null, data);
+                callback(null, r.records);
               }
               exec();
             })
@@ -743,7 +769,11 @@ export class RouterOSAPI extends EventEmitter {
               if (typeof callback === 'function') {
                 callback(err, null);
               }
-              exec();
+              // A '#' probe must succeed near-instantly. Any failure (including
+              // the timeout above) means the transport is gone — report it
+              // truthfully and stop the loop instead of rescheduling forever
+              // while `connected` still reads true.
+              this.handleConnectionLost();
             });
         }, (this.timeout * 1000) / 2);
       }

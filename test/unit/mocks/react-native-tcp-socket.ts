@@ -177,6 +177,21 @@ function makeSocket(): FakeSocket {
   return s;
 }
 
+/**
+ * Create a FakeSocket that emits 'connect' on the next tick, mirroring the
+ * real socket (which connects asynchronously). Consumers attach their
+ * 'connect' listeners synchronously after createConnection() returns, so the
+ * deferred emit is what lets Connector.onConnect()/login run in unit tests.
+ */
+function makeConnectedSocket(cb?: () => void): FakeSocket {
+  const s = makeSocket();
+  setImmediate(() => {
+    s.emit('connect');
+    if (cb) cb();
+  });
+  return s;
+}
+
 /** The most recently created FakeSocket (the active connection). */
 export function lastSocket(): FakeSocket {
   if (sockets.length === 0) {
@@ -191,10 +206,10 @@ export function resetSockets(): void {
 }
 
 export default {
-  createConnection(_opts: unknown, _cb?: () => void): FakeSocket {
-    return makeSocket();
+  createConnection(_opts: unknown, cb?: () => void): FakeSocket {
+    return makeConnectedSocket(cb);
   },
-  connectTLS(_opts: unknown, _cb?: () => void): FakeSocket {
-    return makeSocket();
+  connectTLS(_opts: unknown, cb?: () => void): FakeSocket {
+    return makeConnectedSocket(cb);
   },
 };

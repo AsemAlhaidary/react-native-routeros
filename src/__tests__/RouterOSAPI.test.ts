@@ -46,6 +46,7 @@ function completeFastLogin(socket: FakeSocket): void {
 /** Connect and finish the fast-path login. */
 async function connectFast(api: RouterOSAPI): Promise<void> {
   const p = api.connect();
+  await tick(); // let the socket emit 'connect' so login is written
   completeFastLogin(lastSocket());
   await p;
 }
@@ -71,6 +72,7 @@ describe('RouterOSAPI connection state (F3)', () => {
   test('login sends /login then resolves on the fast path', async () => {
     const api = buildApi();
     const p = api.connect();
+    await tick();
     const socket = lastSocket();
 
     expect(sentences(socket, 0)[0]).toBe('/login');
@@ -83,6 +85,7 @@ describe('RouterOSAPI connection state (F3)', () => {
   test('MD5 challenge path: second /login carries =response=00<hex>', async () => {
     const api = buildApi({ password: 'secret' });
     const p = api.connect();
+    await tick();
     const socket = lastSocket();
 
     socket.emitData(
@@ -233,5 +236,37 @@ describe('write after close / drop (F7)', () => {
 
     await api.close();
     expect(appStateMock.__listenerCount()).toBe(0);
+  });
+});
+
+describe('keepalive death reporting (truthful state)', () => {
+  test('a failed keepalive write flips connected to false and emits close', async () => {
+    // Fake setTimeout (keepalive interval) but keep setImmediate real so the
+    // socket's deferred 'connect' still fires via tick().
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] });
+    try {
+      const api = buildApi({ keepalive: true, timeout: 1 });
+      const p = api.connect();
+      await tick();
+      completeFastLogin(lastSocket());
+      await p;
+      expect(api.connected).toBe(true);
+
+      const onClose = jest.fn();
+      api.on('close', onClose);
+      // Simulate the transport being gone: the '#' probe write rejects.
+      jest.spyOn(api as any, 'writeCommand').mockRejectedValue(new RosException('NOTCONNECTED'));
+
+      // keepalive interval = timeout/2 = 500ms
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(api.connected).toBe(false);
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(appStateMock.__listenerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

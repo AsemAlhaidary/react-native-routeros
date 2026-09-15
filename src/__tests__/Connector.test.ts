@@ -11,10 +11,12 @@ function makeConnector(): Connector {
   return new Connector({ host: '192.0.2.1', port: 8728, timeout: 1 });
 }
 
+const tick = () => new Promise((r) => setImmediate(r));
+
 beforeEach(() => resetSockets());
 
 describe('Connector events', () => {
-  test('connect() creates the socket and emits connected once', () => {
+  test('connect() creates the socket and emits connected once', async () => {
     const c = makeConnector();
     const onConnected = jest.fn();
     c.once('connected', onConnected);
@@ -22,6 +24,7 @@ describe('Connector events', () => {
     c.connect();
 
     expect(lastSocket()).toBeInstanceOf(FakeSocket);
+    await tick();
     expect(onConnected).toHaveBeenCalledTimes(1);
   });
 
@@ -71,5 +74,30 @@ describe('Connector events', () => {
     lastSocket().emitClose();
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Connector idle-timeout vs keepalive', () => {
+  test('arms the destructive idle timeout when keepalive is off', () => {
+    const spy = jest.spyOn(FakeSocket.prototype, 'setTimeout');
+    const c = new Connector({ host: '192.0.2.1', port: 8728, timeout: 60 });
+
+    c.connect();
+
+    expect(spy).toHaveBeenCalledWith(60000);
+    spy.mockRestore();
+  });
+
+  test('does NOT arm the idle timeout when keepalive is on', () => {
+    const spyTimeout = jest.spyOn(FakeSocket.prototype, 'setTimeout');
+    const spyKeepAlive = jest.spyOn(FakeSocket.prototype, 'setKeepAlive');
+    const c = new Connector({ host: '192.0.2.1', port: 8728, timeout: 60, keepalive: true });
+
+    c.connect();
+
+    expect(spyTimeout).not.toHaveBeenCalled();
+    expect(spyKeepAlive).toHaveBeenCalledWith(true);
+    spyTimeout.mockRestore();
+    spyKeepAlive.mockRestore();
   });
 });

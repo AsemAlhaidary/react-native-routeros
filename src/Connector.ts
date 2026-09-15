@@ -14,6 +14,7 @@ export interface ConnectorOptions {
   port?: number;
   timeout?: number;
   tls?: boolean | TlsRnOptions;
+  keepalive?: boolean;
 }
 
 /**
@@ -34,6 +35,7 @@ export class Connector extends EventEmitter {
   private port: number;
   private timeout: number;
   private tls?: TlsRnOptions;
+  private keepalive: boolean;
 
   private connected = false;
   private connecting = false;
@@ -48,6 +50,7 @@ export class Connector extends EventEmitter {
     this.host = options.host;
     this.timeout = options.timeout ?? 10;     // default 10 seconds
     this.port = options.port ?? 8728;          // default port 8728 (plain TCP)
+    this.keepalive = options.keepalive ?? false;
 
     // TLS handling — identical logic to original
     if (typeof options.tls === 'boolean' && options.tls) {
@@ -88,7 +91,9 @@ export class Connector extends EventEmitter {
           (this.socket as any).once('fatal', () => {
             this.onEnd('fatal');
           });
-          this.socket.setTimeout(this.timeout * 1000);
+          if (!this.keepalive) {
+            this.socket.setTimeout(this.timeout * 1000);
+          }
           this.socket.setKeepAlive(true);
           // Wait for socket 'connect' event before marking connected
           this.socket.once('connect', () => this.onConnect());
@@ -109,7 +114,9 @@ export class Connector extends EventEmitter {
           (this.socket as any).once('fatal', () => {
             this.onEnd('fatal');
           });
-          this.socket.setTimeout(this.timeout * 1000);
+          if (!this.keepalive) {
+            this.socket.setTimeout(this.timeout * 1000);
+          }
           this.socket.setKeepAlive(true);
           // Wait for socket 'connect' event before marking connected
           this.socket.once('connect', () => this.onConnect());
